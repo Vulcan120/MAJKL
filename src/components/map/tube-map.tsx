@@ -26,7 +26,7 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     const map = tubeMap(d3.select(containerRef.current));
     mapInstance.current = map;
 
-    d3.json('https://raw.githubusercontent.com/johnwalley/d3-tube-map/master/example/data/london.json').then((data: any) => {
+    d3.json('https://raw.githubusercontent.com/d3-tube-map/d3-tube-map.github.io/main/dist/data/london.json').then((data: any) => {
       map.data(data);
       const renderMap = () => {
         if (!containerRef.current) return;

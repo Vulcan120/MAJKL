@@ -39,6 +39,7 @@
 21. [Glossary](#glossary)
 22. [References & Resources](#references--resources)
 
+
 ## 1. Introduction
 PhantomFog is a next-generation, gamified location verification platform that overlays a dynamic fog-of-war on an SVG London Tube map. Developed by Team MAJKL for BrunelHack 2025, PhantomFog leverages blockchain (Solana) and decentralized compute/storage (ICP) alongside AI-driven photo verification for a secure, privacy-preserving, and engaging experience.
 

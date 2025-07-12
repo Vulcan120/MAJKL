@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
+import '@solana/wallet-adapter-react-ui/styles.css';
 import { Toaster } from '@/components/ui/toaster';
 import { WalletProvider } from '@/components/providers/wallet-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';

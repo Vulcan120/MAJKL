@@ -28,7 +28,8 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     mapInstance.current = map;
 
     const data: any = londonData;
-    map.data(data);
+    d3.select(containerRef.current).datum(data).call(map);
+
     const renderMap = () => {
       if (!containerRef.current) return;
       map.width(containerRef.current.clientWidth).height(containerRef.current.clientHeight);

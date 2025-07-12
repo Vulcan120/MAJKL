@@ -5,7 +5,7 @@
 **Event:** BrunelHack 2025
 
 ## Table of Contents
-1. [Introduction](introduction)
+1. [Introduction](#introduction)
 2. [Project Vision & Objectives](#project-vision--objectives)
    - [Vision](#vision)
    - [Core Objectives](#core-objectives)
@@ -38,6 +38,7 @@
 20. [Future Roadmap](#future-roadmap)
 21. [Glossary](#glossary)
 22. [References & Resources](#references--resources)
+
 
 
 ## 1. Introduction

@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { useTheme } from 'next-themes';
 // @ts-ignore
 import { tubeMap } from 'd3-tube-map';
+import londonData from '@/lib/london.json';
 
 interface TubeMapProps {
   visitedStations: string[];
@@ -26,38 +27,38 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     const map = tubeMap(d3.select(containerRef.current));
     mapInstance.current = map;
 
-    d3.json('https://raw.githubusercontent.com/d3-tube-map/d3-tube-map.github.io/main/dist/data/london.json').then((data: any) => {
-      map.data(data);
-      const renderMap = () => {
-        if (!containerRef.current) return;
-        map.width(containerRef.current.clientWidth).height(containerRef.current.clientHeight);
-        map.draw();
+    const data: any = londonData;
+    map.data(data);
+    const renderMap = () => {
+      if (!containerRef.current) return;
+      map.width(containerRef.current.clientWidth).height(containerRef.current.clientHeight);
+      map.draw();
 
-        const coords: Record<string, { x: number; y: number }> = {};
-        d3.select(containerRef.current)
-          .selectAll('.station')
-          .each(function (d: any) {
-            if (d.id) {
-              const transform = d3.select(this).attr('transform');
-              if (transform) {
-                const translate = transform.substring(transform.indexOf('(') + 1, transform.indexOf(')')).split(',');
-                coords[d.id] = { x: parseFloat(translate[0]), y: parseFloat(translate[1]) };
-              }
+      const coords: Record<string, { x: number; y: number }> = {};
+      d3.select(containerRef.current)
+        .selectAll('.station')
+        .each(function (d: any) {
+          if (d.id) {
+            const transform = d3.select(this).attr('transform');
+            if (transform) {
+              const translate = transform.substring(transform.indexOf('(') + 1, transform.indexOf(')')).split(',');
+              coords[d.id] = { x: parseFloat(translate[0]), y: parseFloat(translate[1]) };
             }
-          });
-        setStationCoords(coords);
-      };
-      
-      renderMap();
-      window.addEventListener('resize', renderMap);
+          }
+        });
+      setStationCoords(coords);
+    };
+    
+    renderMap();
+    const resizeObserver = new ResizeObserver(renderMap);
+    resizeObserver.observe(containerRef.current);
 
-      return () => {
-        window.removeEventListener('resize', renderMap);
-        if (containerRef.current) {
-          d3.select(containerRef.current).selectAll('*').remove();
-        }
-      };
-    });
+    return () => {
+      resizeObserver.disconnect();
+      if (containerRef.current) {
+        d3.select(containerRef.current).selectAll('*').remove();
+      }
+    };
   }, []);
   
   const fogHoles = useMemo(() => {

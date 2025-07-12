@@ -39,23 +39,20 @@
 21. [Glossary](#glossary)
 22. [References & Resources](#references--resources)
 
-
-
-## 1. Introduction
+<a id="introduction"></a>
+## Introduction
 PhantomFog is a next-generation, gamified location verification platform that overlays a dynamic fog-of-war on an SVG London Tube map. Developed by Team MAJKL for BrunelHack 2025, PhantomFog leverages blockchain (Solana) and decentralized compute/storage (ICP) alongside AI-driven photo verification for a secure, privacy-preserving, and engaging experience.
 
 Users physically visit Tube stations, capture an in-app selfie with a paper sign displaying their `@username`, and submit photos for AI validation. Upon successful verification, metadata is stored immutably on ICP canisters and a Solana transaction logs the station visit, minting an on-chain NFT badge. The global map fog clears in real-time, fostering collaborative exploration and friendly competition.
 
-**Key Differentiators:**
-- **Hybrid Blockchain Architecture:** Combines Solana’s speed with ICP’s scalable storage.
-- **AI Assurance:** Uses Gemini model to detect real faces, handwritten usernames, and context.
-- **User-Owned Data:** Raw images remain under user control in encrypted canisters.
-- **Enterprise-Grade UX:** Accessibility, performance, and modular design for large-scale events.
+<a id="project-vision--objectives"></a>
+## Project Vision & Objectives
 
-## 2. Project Vision & Objectives
+<a id="vision"></a>
 ### Vision
 Revolutionize how people prove physical presence by seamlessly integrating decentralized verification with real-world exploration gamified for mass engagement.
 
+<a id="core-objectives"></a>
 ### Core Objectives
 - **Trustless Proof-of-Presence:** Multi-layered pipeline ensuring >99% authenticity accuracy.
 - **Data Sovereignty & Privacy:** Store only essential metadata; sensitive data remains encrypted.
@@ -65,6 +62,7 @@ Revolutionize how people prove physical presence by seamlessly integrating decen
 - **Cross-Chain Interoperability:** Support SPL tokens and ICP-certified NFTs.
 - **Sustainable Ecosystem:** Monetize through events, premium badges, analytics subscriptions, and DAO governance.
 
+<a id="success-metrics"></a>
 ### Success Metrics
 - **50K MAU** within 6 months.
 - **1M+** check-ins per day.
@@ -72,7 +70,8 @@ Revolutionize how people prove physical presence by seamlessly integrating decen
 - **40%** 30-day retention.
 - **20%** referral rate.
 
-## 3. User Personas & Use Cases
+<a id="user-personas--use-cases"></a>
+## User Personas & Use Cases
 | Persona            | Goals                                            | Pain Points                              |
 |--------------------|--------------------------------------------------|------------------------------------------|
 | **Urban Explorer** | Discover hidden locales; earn digital badges     | Standard check-in apps lack authenticity |
@@ -80,14 +79,8 @@ Revolutionize how people prove physical presence by seamlessly integrating decen
 | **Transit Authority**| Incentivize off-peak travel; collect usage metrics| Data privacy; user adoption            |
 | **Developer Partner**| Integrate location gamification into apps      | Lack of ready-to-use SDKs and APIs       |
 
-**Use Case Example:**
-1. Explorer Alice opens PhantomFog and sees a fully fogged map.
-2. She travels to Baker Street, captures a selfie with `@Alice123`.
-3. AI verifies authenticity; ICP canister stores metadata.
-4. Phantom Wallet signs a Solana tx; NFT badge is minted.
-5. Fog at Baker Street clears globally; Alice’s profile is updated.
-
-## 4. System Overview & Architecture
+<a id="system-overview--architecture"></a>
+## System Overview & Architecture
 ```mermaid
 flowchart LR
   subgraph UI
@@ -102,16 +95,15 @@ flowchart LR
   I -->|Fetch| F
   F -->|Update| M[Fog-of-War Map]
 ```
-- **React Frontend:** SPA handling map rendering, forms, and state.
-- **AI Service:** GenKit prompts Gemini for face, text, and context validation.
-- **ICP Canister:** Motoko actor storing `PhotoMeta` records; horizontally scalable.
-- **Solana Anchor:** Rust program `clear_station` logs visits and issues SBT badges.
-- **Fog-of-War Map:** d3-tube-map SVG with CSS mask updated by station state.
 
-## 5. Frontend Design & Implementation
+<a id="frontend-design--implementation"></a>
+## Frontend Design & Implementation
+
+<a id="tech-stack"></a>
 ### Tech Stack
 - React.js (v18), TypeScript, Tailwind CSS, Radix UI, d3-tube-map.
 
+<a id="component-structure"></a>
 ### Component Structure
 ```
 App
@@ -126,11 +118,13 @@ App
 └── Toaster.tsx
 ```
 
+<a id="key-logic"></a>
 ### Key Logic
 - **State Management:** React Context + React Query for async data.
 - **Fog Mask Update:** Recompute SVG mask when `visitedStations` changes.
 - **Responsive Handling:** `useIsMobile` hook adjusts breakpoints.
 
+<a id="code-snippet-fog-mask"></a>
 ### Code Snippet: Fog Mask
 ```jsx
 <mask id="fog">
@@ -142,9 +136,10 @@ App
 <g mask="url(#fog)">{/* map content */}</g>
 ```
 
-## 6. Backend & API Layer
-- **Stack:** Node.js (v18), TypeScript, Express.js, Zod.
+<a id="backend--api-layer"></a>
+## Backend & API Layer
 
+<a id="endpoints"></a>
 ### Endpoints
 | Endpoint             | Method | Description                          |
 |----------------------|--------|--------------------------------------|
@@ -153,13 +148,17 @@ App
 | `/api/clear-station` | POST   | Build and return Solana tx instruction |
 | `/api/get-logs`      | GET    | Fetch `PhotoMeta` list from ICP      |
 
+<a id="middleware"></a>
 ### Middleware
 - **CORS:** Restrictive origin policy.
 - **Rate Limiter:** 60 req/min (`express-rate-limit`).
 - **Body Parser:** JSON with size limits.
 - **Error Handler:** Centralized `{ code, message }` format.
 
-## 7. Blockchain Components
+<a id="blockchain-components"></a>
+## Blockchain Components
+
+<a id="solana-anchor-program"></a>
 ### Solana Anchor Program
 ```rust
 #[program]
@@ -188,9 +187,8 @@ pub struct StationLog {
   pub timestamp: i64
 }
 ```
-- **Badge Minting:** Integrates Metaplex compressed NFTs.
-- **Security Constraints:** Anchor enforces account permissions.
 
+<a id="internet-computer-icp-canister"></a>
 ### Internet Computer (ICP) Canister
 ```motoko
 actor majkl_canister {
@@ -209,17 +207,17 @@ actor majkl_canister {
   }
 }
 ```
-- **Auto-Scaling:** DFINITY replicates canister state.
-- **Access Control:** Only front-end API key allowed.
 
-## 8. AI-Based Verification Flow
+<a id="ai-based-verification-flow"></a>
+## AI-Based Verification Flow
 - **Capture & Encode:** Convert user photo to Base64.
 - **GenKit Prompt:** Contextual instructions + photo URI.
 - **Gemini Model:** Validates face, OCR on username, and scene.
 - **Threshold Logic:** Accept if `confidence >= 0.8`; else reject.
 - **Result Handling:** Return `{ isAuthentic, score, errors[] }`.
 
-## 9. Data Models & Schemas
+<a id="data-models--schemas"></a>
+## Data Models & Schemas
 ```ts
 const PhotoMeta = z.object({  
   stationId: z.number(),
@@ -228,69 +226,81 @@ const PhotoMeta = z.object({
 });
 type PhotoMeta = z.infer<typeof PhotoMeta>;
 ```
-- **StationLog Account:** Defined in Anchor IDL.
 
-## 10. Security & Privacy Considerations
+<a id="security--privacy-considerations"></a>
+## Security & Privacy Considerations
 - TLS 1.3 for all APIs.
 - Phantom Wallet handles private keys.
 - No PII stored on-chain.
 - Verification in serverless, ephemeral AI environment.
 
-## 11. Performance & Scalability
+<a id="performance--scalability"></a>
+## Performance & Scalability
 - Solana TPS: >50k tx/sec.
 - ICP Auto-Scaling: Dynamic cycles.
 - Frontend: Code-splitting, lazy-loading.
 
-## 12. Deployment & DevOps
+<a id="deployment--devops"></a>
+## Deployment & DevOps
 - CI/CD: GitHub Actions -> Vercel & DFX.
 - Secrets: GitHub Secrets (`DFX_ID`, `SOL_KEY`).
 - Monitoring: Sentry, Prometheus, Grafana.
 
-## 13. Testing Strategy
+<a id="testing-strategy"></a>
+## Testing Strategy
 - Unit: Jest (React), Mocha (Node).
 - Integration: Anchor tests, DFX canister tests.
 - E2E: Cypress simulating check-ins.
 
-## 14. Monitoring & Analytics
+<a id="monitoring--analytics"></a>
+## Monitoring & Analytics
 - **Metrics:** API latency, tx times, AI success rates.
 - **Dashboards:** Grafana with Prometheus exporter.
 - **User Events:** Segment for check-ins.
 
-## 15. User Interface & Experience
+<a id="user-interface--experience"></a>
+## User Interface & Experience
 - WCAG 2.1 AA compliance.
 - Mobile-first responsive design.
 - Feedback via `useToast` toasts.
 
-## 16. Internationalization & Localization
+<a id="internationalization--localization"></a>
+## Internationalization & Localization
 - `react-i18next` with locale JSON files.
 - Dynamic support for multiple city maps.
 
-## 17. Accessibility
+<a id="accessibility"></a>
+## Accessibility
 - ARIA roles on interactive elements.
 - Full keyboard navigation and focus management.
 
-## 18. Error Handling & Logging
+<a id="error-handling--logging"></a>
+## Error Handling & Logging
 - React Error Boundary component.
 - Standardized JSON error responses.
 
-## 19. Developer Experience & Documentation
+<a id="developer-experience--documentation"></a>
+## Developer Experience & Documentation
 - TypeScript SDK & CLI for rapid setup.
 - Auto-generated IDL docs from Anchor & Motoko.
 - EditorConfig: ESLint, Prettier, Tailwind Lint.
 
-## 20. Future Roadmap
+<a id="future-roadmap"></a>
+## Future Roadmap
 - Global expansion: NYC, Tokyo.
 - GPS-based geofencing check-ins.
 - AR overlays with station info.
 - DAO governance for community events.
 
-## 21. Glossary
+<a id="glossary"></a>
+## Glossary
 - **Badge:** On-chain NFT/SBT for station visits.
 - **Canister:** ICP compute + storage unit.
 - **Fog-of-War:** SVG mask motif for the map.
 - **PhotoMeta:** `{ stationId, url, timestamp }`.
 
-## 22. References & Resources
+<a id="references--resources"></a>
+## References & Resources
 - [Solana Docs](https://docs.solana.com/)
 - [Anchor Framework](https://project-serum.github.io/anchor/)
 - [DFINITY SDK](https://sdk.dfinity.org/)

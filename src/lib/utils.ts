@@ -168,9 +168,41 @@ export function clearVisitLog(): void {
   }
 }
 
-export function getPhotosForStation(stationName: string): StationPhoto[] {
-  const allPhotos = getStationPhotos();
-  return allPhotos[stationName] || [];
+export function getPhotosForStation(stationIdentifier: string): StationPhoto[] {
+  try {
+    const allPhotos = getStationPhotos();
+    console.log('getPhotosForStation called with identifier:', stationIdentifier);
+    console.log('All photos in storage:', allPhotos);
+    
+    // Try as station ID first
+    let photos = allPhotos[stationIdentifier];
+    console.log('Photos found with exact identifier:', photos);
+    
+    // If not found, try converting from display name to ID
+    if (!photos) {
+      const stationId = stationNameToId(stationIdentifier);
+      console.log('Converted station name to ID:', stationIdentifier, '->', stationId);
+      photos = allPhotos[stationId];
+      console.log('Photos found with converted ID:', photos);
+    }
+    
+    const result = photos || [];
+    console.log('Final photos result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error getting photos for station:', error);
+    return [];
+  }
+}
+
+// Get the actual photo data URL from a photo ID
+export function getPhotoDataUrl(photoId: string): string | null {
+  try {
+    return localStorage.getItem(`photo_${photoId}`);
+  } catch (error) {
+    console.error('Error getting photo data:', error);
+    return null;
+  }
 }
 
 export function hasStationPhotos(stationIdentifier: string): boolean {

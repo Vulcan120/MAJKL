@@ -26,6 +26,7 @@ import {
   Check     // Add this
 } from 'lucide-react';
 import { useTubeTheme } from '@/contexts/tube-theme-context';
+import StationTokens from './station-tokens';
 
 interface UserProfileProps {
   collectedBadges: string[];
@@ -488,6 +489,9 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
                 )}
               </CardContent>
             </Card>
+
+            {/* Station Tokens Section */}
+            <StationTokens />
 
             {/* Add Theme Selection Section */}
             <Card>

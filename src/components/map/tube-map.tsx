@@ -1,16 +1,15 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import * as d3 from 'd3';
-import { useTheme } from 'next-themes';
-import londonData from '@/lib/london.json';
-import StationPhotoModal from '@/components/map/station-photo-modal';
-import { hasStationPhotos } from '@/lib/utils';
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import * as d3 from "d3";
+import { useTheme } from "next-themes";
+import londonData from "@/lib/london.json";
+import StationPhotoModal from "@/components/map/station-photo-modal";
+import { hasStationPhotos } from "@/lib/utils";
 
 interface TubeMapProps {
   visitedStations: string[];
   userLocation: { lat: number; lon: number } | null;
-
 }
 
 type LineRaw = {
@@ -21,16 +20,16 @@ type LineRaw = {
 
 const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [stationCoords, setStationCoords] = useState<Record<string, { x: number; y: number }>>(
-    {}
-  );
+  const [stationCoords, setStationCoords] = useState<
+    Record<string, { x: number; y: number }>
+  >({});
   const [hoveredStation, setHoveredStation] = useState<{
     name: string;
     lines: { color: string; name: string }[];
   } | null>(null);
-  const [stationDetails, setStationDetails] = useState<Record<string, { name: string; lines: { color: string; name: string }[] }>>(
-    {}
-  );
+  const [stationDetails, setStationDetails] = useState<
+    Record<string, { name: string; lines: { color: string; name: string }[] }>
+  >({});
   const [selectedStation, setSelectedStation] = useState<string | null>(null);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const { resolvedTheme } = useTheme();
@@ -45,21 +44,26 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
 
   const fogColor = useMemo(
     () =>
-      resolvedTheme === 'dark'
-        ? 'hsl(222.2 84% 4.9% / 0.7)'
-        : 'hsl(0 0% 97% / 0.7)',
+      resolvedTheme === "dark"
+        ? "hsl(222.2 84% 4.9% / 0.7)"
+        : "hsl(0 0% 97% / 0.7)",
     [resolvedTheme]
   );
 
   useEffect(() => {
     if (!containerRef.current) return;
 
+    console.log("TubeMap re-rendering with visitedStations:", visitedStations);
+
     // clear previous
-    d3.select(containerRef.current).selectAll('*').remove();
+    d3.select(containerRef.current).selectAll("*").remove();
 
     // cast lines
-    const rawLines = (londonData.lines as unknown) as LineRaw[];
-    const stationLineDetails: Record<string, { name: string; lines: { color: string; name: string }[] }> = {};
+    const rawLines = londonData.lines as unknown as LineRaw[];
+    const stationLineDetails: Record<
+      string,
+      { name: string; lines: { color: string; name: string }[] }
+    > = {};
 
     // 1️⃣ gather stationPositions from line nodes
     const stationPositions: Record<string, [number, number]> = {};
@@ -70,12 +74,15 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     });
 
     // Gather line details for each station
-    rawLines.forEach(ln => {
-      ln.nodes.forEach(node => {
+    rawLines.forEach((ln) => {
+      ln.nodes.forEach((node) => {
         if (!stationLineDetails[node.name]) {
           stationLineDetails[node.name] = { name: node.name, lines: [] };
         }
-        stationLineDetails[node.name].lines.push({ color: ln.color, name: ln.name || 'Unknown Line' }); // Use ln.name directly and provide a fallback
+        stationLineDetails[node.name].lines.push({
+          color: ln.color,
+          name: ln.name || "Unknown Line",
+        }); // Use ln.name directly and provide a fallback
       });
     });
 
@@ -87,22 +94,28 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
 
-    const xScale = d3.scaleLinear().domain([d3.min(xs)!, d3.max(xs)!]).range([20, width - 20]);
-    const yScale = d3.scaleLinear().domain([d3.min(ys)!, d3.max(ys)!]).range([20, height - 20]);
+    const xScale = d3
+      .scaleLinear()
+      .domain([d3.min(xs)!, d3.max(xs)!])
+      .range([20, width - 20]);
+    const yScale = d3
+      .scaleLinear()
+      .domain([d3.min(ys)!, d3.max(ys)!])
+      .range([20, height - 20]);
 
     // 3️⃣ set up SVG + zoom
     const svg = d3
       .select(containerRef.current)
-      .append('svg')
-      .attr('width', width)
-      .attr('height', height);
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
 
-    const g = svg.append('g');
+    const g = svg.append("g");
     svg.call(
       d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.5, 4])
-        .on('zoom', (event) => g.attr('transform', event.transform))
+        .on("zoom", (event) => g.attr("transform", event.transform))
     );
 
     // 4️⃣ draw each line
@@ -113,52 +126,71 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
       .curve(d3.curveLinear);
 
     rawLines.forEach((ln) => {
-      g.append('path')
+      g.append("path")
         .datum(ln.nodes.map((n) => n.coords))
-        .attr('d', lineGen)
-        .attr('stroke', ln.color)
-        .attr('stroke-width', 4)
-        .attr('fill', 'none');
+        .attr("d", lineGen)
+        .attr("stroke", ln.color)
+        .attr("stroke-width", 4)
+        .attr("fill", "none");
     });
 
     // 5️⃣ draw stations & record screen coords
     const coordsMap: Record<string, { x: number; y: number }> = {};
-    g.selectAll('circle.station')
-      .data(Object.entries(stationPositions), (d) => d[0]) // Use station ID as key
-      .join('circle')
-      .attr('class', (d) => {
+    g.selectAll("circle.station")
+      .data(
+        Object.entries(stationPositions),
+        (d) => (d as [string, [number, number]])[0]
+      ) // Use station ID as key
+      .join("circle")
+      .attr("class", (d) => {
         const isVisited = visitedStations.includes(d[0]);
         const hasPhotos = hasStationPhotos(d[0]);
-        return `station ${isVisited ? 'visited' : ''} ${hasPhotos ? 'has-photos' : ''}`;
+        if (isVisited) {
+          console.log(`Station ${d[0]} is marked as visited`);
+        }
+        return `station ${isVisited ? "visited" : ""} ${
+          hasPhotos ? "has-photos" : ""
+        }`;
       })
-      .attr('cx', ([, pos]) => xScale(pos[0]))
-      .attr('cy', ([, pos]) => yScale(pos[1]))
-      .attr('r', (d) => (visitedStations.includes(d[0]) ? 7 : 5)) // Larger radius for visited
-      .attr('fill', (d) => {
+      .attr("cx", ([, pos]) => xScale(pos[0]))
+      .attr("cy", ([, pos]) => yScale(pos[1]))
+      .attr("r", (d) => (visitedStations.includes(d[0]) ? 7 : 5)) // Larger radius for visited
+      .attr("fill", (d) => {
         const isVisited = visitedStations.includes(d[0]);
-        if (isVisited) return 'yellow'; // Yellow for visited stations
-        return 'white'; // White for unvisited stations
+        if (isVisited) return "yellow"; // Yellow for visited stations
+        return "white"; // White for unvisited stations
       })
-      .attr('stroke', 'black')
-      .attr('stroke-width', 2)
-      .style('filter', (d) => (visitedStations.includes(d[0]) ? 'url(#glow)' : null)) // Apply glow filter for visited
-      .style('transition', 'r 0.2s ease-in-out, fill 0.2s ease-in-out') // Add transition for animation
-      .style('cursor', (d) => {
+      .attr("stroke", "black")
+      .attr("stroke-width", 2)
+      .style("filter", (d) =>
+        visitedStations.includes(d[0]) ? "url(#glow)" : null
+      ) // Apply glow filter for visited
+      .style("transition", "r 0.2s ease-in-out, fill 0.2s ease-in-out") // Add transition for animation
+      .style("cursor", (d) => {
         const isVisited = visitedStations.includes(d[0]);
-        return isVisited ? 'pointer' : 'default';
+        return isVisited ? "pointer" : "default";
       })
-      .on('mouseover', function(_, d) { // Use function() to access 'this'
-        d3.select(this).transition().duration(200).attr('r', visitedStations.includes(d[0]) ? 10 : 7); // Further increase size on hover for visited
-        setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]);
+      .on("mouseover", function (_, d) {
+        // Use function() to access 'this'
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("r", visitedStations.includes(d[0]) ? 10 : 7); // Further increase size on hover for visited
+        setHoveredStation(
+          stationLineDetails[(d as [string, [number, number]])[0]]
+        );
       })
-      .on('click', (_, d) => {
+      .on("mouseout", function (_, d) {
+        // Use function() to access 'this'
+        d3.select(this)
+          .transition()
+          .duration(200)
+          .attr("r", visitedStations.includes(d[0]) ? 7 : 5); // Reset to normal size
+        setHoveredStation(null);
+      })
+      .on("click", (_, d) => {
         handleStationClick(d[0]);
-      })
-    // Add event listeners to station circles
-      .on('mouseover', function (_, d) { // Use function() to access 'this'
-        setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]); // Explicitly cast d
-      })
-      .on('mouseout', () => setHoveredStation(null));
+      });
 
     // Record screen coordinates after scaling
     Object.entries(stationPositions).forEach(([id, pos]) => {
@@ -174,30 +206,39 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
   );
 
   // Filter out undefined values in case a station ID is not found in stationCoords - this is incorrect
-  const validFogHoles = fogHoles.filter(hole => hole !== undefined);
-
-  
+  const validFogHoles = fogHoles.filter((hole) => hole !== undefined);
 
   return (
     <div className="w-full h-full relative">
       <div ref={containerRef} className="w-full h-full" />
       <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
-       <defs>
+        <defs>
           <mask id="fog-mask">
             {/* Iterate through all station coordinates to create fog holes */}
-            {validFogHoles.map((c, i) => {const isVisited = visitedStations.includes(
-    Object.keys(stationCoords).find((key) => stationCoords[key] === c) || ''
-  );
-  return (
-              <circle key={i} cx={c.x} cy={c.y} r={isVisited ? "55" : "50"} fill="white" filter={isVisited ? "url(#glow)" : undefined} />
-            )})}
+            {validFogHoles.map((c, i) => {
+              const isVisited = visitedStations.includes(
+                Object.keys(stationCoords).find(
+                  (key) => stationCoords[key] === c
+                ) || ""
+              );
+              return (
+                <circle
+                  key={i}
+                  cx={c.x}
+                  cy={c.y}
+                  r={isVisited ? "55" : "50"}
+                  fill="white"
+                  filter={isVisited ? "url(#glow)" : undefined}
+                />
+              );
+            })}
           </mask>
-           <filter id="glow">
+          <filter id="glow">
             {/* This filter creates the white glow effect */}
-            <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+            <feGaussianBlur stdDeviation="10" result="coloredBlur" />
             <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
@@ -208,7 +249,10 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
           <ul>
             {hoveredStation.lines.map((line, index) => (
               <li key={index} className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: line.color }}></span>
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: line.color }}
+                ></span>
                 {line.name}
               </li>
             ))}

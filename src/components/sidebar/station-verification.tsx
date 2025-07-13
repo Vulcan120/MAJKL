@@ -1,56 +1,23 @@
-"use client";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Camera,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  MapPin,
-  Navigation,
-} from "lucide-react";
-import { verifyStationImageAction } from "@/lib/actions";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { orderByDistance } from "geolib";
-import stationCoordinates from "@/lib/station-coordinates.json";
-import { saveStationPhoto } from "@/lib/utils";
-import { mintStationToken, type StationToken } from "@/lib/token-system";
-import TokenMintCelebration from "./token-mint-celebration";
+'use client';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
+import { Camera, CheckCircle, XCircle, Loader2, MapPin, Navigation } from 'lucide-react';
+import { verifyStationImageAction } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { orderByDistance } from 'geolib';
+import stationCoordinates from '@/lib/station-coordinates.json';
+import { saveStationPhoto, saveStationVisit } from '@/lib/utils';
+import { mintStationToken, type StationToken } from '@/lib/token-system';
+import TokenMintCelebration from './token-mint-celebration';
 
 const VerificationSchema = z.object({
   stationName: z.string().min(1, "Please select a station"),
@@ -301,7 +268,7 @@ export default function StationVerification({
     [allStations]
   );
 
-  // Get organized station list (nearby first, then alphabetical)
+  // Get organized station list (nearby first, then alphabetical with grouping)
   const getOrganizedStations = useCallback(() => {
     if (nearbyStations.length === 0) {
       return allStations.sort();
@@ -313,6 +280,26 @@ export default function StationVerification({
       .sort();
 
     return [...nearbyStations.map((s) => s.name), ...otherStations];
+  }, [allStations, nearbyStations]);
+
+  // Group other stations alphabetically
+  const getAlphabeticalGroups = useCallback(() => {
+    const nearbyStationNames = nearbyStations.map(s => s.name);
+    const otherStations = allStations
+      .filter(station => !nearbyStationNames.includes(station))
+      .sort();
+
+    const groups: { [key: string]: string[] } = {};
+    
+    otherStations.forEach(station => {
+      const firstLetter = station.charAt(0).toUpperCase();
+      if (!groups[firstLetter]) {
+        groups[firstLetter] = [];
+      }
+      groups[firstLetter].push(station);
+    });
+
+    return groups;
   }, [allStations, nearbyStations]);
 
   // Format distance for display
@@ -455,7 +442,12 @@ export default function StationVerification({
             console.error("Failed to save photo:", error);
           }
         }
-
+        
+        // Save to visit log
+        saveStationVisit(data.stationName, true, userLocation ? {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude
+        } : undefined);
         // Mint station token
         let mintedTokenData: StationToken | null = null;
         try {
@@ -565,7 +557,12 @@ export default function StationVerification({
           console.error("Failed to save photo:", error);
         }
       }
-
+      
+      // Save to visit log
+      saveStationVisit(data.stationName, true, userLocation ? {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude
+      } : undefined);
       // Mint station token
       let mintedTokenData: StationToken | null = null;
       try {
@@ -699,8 +696,8 @@ export default function StationVerification({
                     <SelectContent>
                       {nearbyStations.length > 0 && (
                         <>
-                          <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b">
-                            Nearby Stations
+                          <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b bg-muted/50">
+                            📍 Nearby Stations
                           </div>
                           {nearbyStations.map((station) => (
                             <SelectItem key={station.name} value={station.name}>
@@ -712,18 +709,25 @@ export default function StationVerification({
                               </div>
                             </SelectItem>
                           ))}
-                          <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b">
-                            All Stations
+                          <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b bg-muted/50">
+                            🚇 All Stations
                           </div>
                         </>
                       )}
-                      {organizedStations
-                        .slice(nearbyStations.length)
-                        .map((station) => (
-                          <SelectItem key={station} value={station}>
-                            {station}
-                          </SelectItem>
-                        ))}
+                      
+                      {/* Alphabetical grouping */}
+                      {Object.entries(getAlphabeticalGroups()).map(([letter, stations]) => (
+                        <div key={letter}>
+                          <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-accent/20 border-b">
+                            {letter}
+                          </div>
+                          {stations.map((station) => (
+                            <SelectItem key={station} value={station} className="pl-4">
+                              {station}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -11,11 +11,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"; // Import tooltip components
-import UserProfile from "@/components/sidebar/user-profile";
-import StationVerification from "@/components/sidebar/station-verification";
-import TubeLineKey, { LineData } from "@/components/sidebar/tube-line-key";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Rocket, LocateIcon, AlertCircle } from "lucide-react";
+
+import UserProfile from '@/components/sidebar/user-profile';
+import StationVerification from '@/components/sidebar/station-verification';
+import TubeLineKey, { LineData } from '@/components/sidebar/tube-line-key';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu, Rocket, LocateIcon, AlertCircle, Train } from 'lucide-react';
 
 const ALL_STATIONS = [
   "Acton Town",
@@ -453,27 +454,22 @@ export default function Home() {
             <TubeLineKey lineData={lineStationCounts} />
           </aside>
 
-          {/* Mobile button for line key modal */}
-          <div className="md:hidden absolute bottom-4 right-4 z-20">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="rounded-full shadow-lg"
-                >
-                  <Rocket className="h-5 w-5 mr-2" />
+        {/* Mobile button for line key modal */}
+ <div className="md:hidden absolute bottom-4 right-4 z-20">
+ <Sheet>
+ <SheetTrigger asChild>
+ <Button variant="outline" size="lg" className="rounded-full shadow-lg">
+ <Train className="h-5 w-5 mr-2" />
                   Tube Lines
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="w-[24rem] p-6 pt-10 overflow-y-auto"
-              ></SheetContent>
-            </Sheet>
-          </div>
-        </main>
-      </div>
+ </Button>
+ </SheetTrigger>
+                <SheetContent side="right" className="w-[24rem] p-6 pt-10 overflow-y-auto">
+                  <TubeLineKey lineData={lineStationCounts} />
+ </SheetContent>
+ </Sheet>
+        </div>
+      </main>
+    </div>
     </TooltipProvider>
   );
 }

@@ -106,50 +106,71 @@ export function getStationPhotos(): StationPhotoData {
   }
 }
 
-// Get photos for a station by either ID or display name
-export function getPhotosForStation(stationIdentifier: string): StationPhoto[] {
+// Visit log functionality
+export interface VisitLogEntry {
+  stationName: string;
+  timestamp: Date;
+  verified: boolean;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+export function saveStationVisit(stationName: string, verified: boolean, location?: { latitude: number; longitude: number }): void {
   try {
-    const allPhotos = getStationPhotos();
-    console.log("getPhotosForStation called with:", stationIdentifier);
-    console.log("All stored photos:", Object.keys(allPhotos));
-
-    // Try as station ID first
-    let photos = allPhotos[stationIdentifier];
-    console.log("Direct lookup result:", photos);
-
-    // If not found, try converting from display name to ID
-    if (!photos) {
-      const stationId = stationNameToId(stationIdentifier);
-      console.log("Converted identifier to ID:", stationId);
-      photos = allPhotos[stationId];
-      console.log("Converted lookup result:", photos);
+    const existingLog = getVisitLog();
+    
+    const newEntry: VisitLogEntry = {
+      stationName,
+      timestamp: new Date(),
+      verified,
+      location
+    };
+    
+    // Add new entry to the beginning of the array (most recent first)
+    existingLog.unshift(newEntry);
+    
+    // Keep only the last 100 entries to prevent localStorage from getting too large
+    if (existingLog.length > 100) {
+      existingLog.splice(100);
     }
-
-    // If still not found, try converting from ID to display name
-    if (!photos && stationIdentifier.includes("-")) {
-      const displayName = stationIdToName(stationIdentifier);
-      console.log("Converted ID to display name:", displayName);
-      photos = allPhotos[displayName];
-      console.log("Display name lookup result:", photos);
-    }
-
-    const result = photos || [];
-    console.log("Final result:", result);
-    return result;
+    
+    localStorage.setItem('stationVisitLog', JSON.stringify(existingLog));
   } catch (error) {
-    console.error("Error getting photos for station:", error);
+    console.error('Error saving station visit:', error);
+  }
+}
+
+export function getVisitLog(): VisitLogEntry[] {
+  try {
+    const data = localStorage.getItem('stationVisitLog');
+    if (!data) return [];
+    
+    const entries = JSON.parse(data);
+    
+    // Convert timestamp strings back to Date objects
+    return entries.map((entry: any) => ({
+      ...entry,
+      timestamp: new Date(entry.timestamp)
+    }));
+  } catch (error) {
+    console.error('Error getting visit log:', error);
     return [];
   }
 }
 
-// Get the actual photo data URL from a photo ID
-export function getPhotoDataUrl(photoId: string): string | null {
+export function clearVisitLog(): void {
   try {
-    return localStorage.getItem(`photo_${photoId}`);
+    localStorage.removeItem('stationVisitLog');
   } catch (error) {
-    console.error("Error getting photo data:", error);
-    return null;
+    console.error('Error clearing visit log:', error);
   }
+}
+
+export function getPhotosForStation(stationName: string): StationPhoto[] {
+  const allPhotos = getStationPhotos();
+  return allPhotos[stationName] || [];
 }
 
 export function hasStationPhotos(stationIdentifier: string): boolean {

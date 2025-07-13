@@ -9,6 +9,21 @@ interface TubeMapProps {
   visitedStations: string[];
 }
 
+// --- Type for the station data displayed in the status box ---
+interface StationStatus {
+  name: string;
+  lines: { name: string; color: string }[];
+}
+
+
+
+// --- Type for the station label data ---
+interface StationLabel {
+  id: string;
+  x: number;
+  y: number;
+}
+
 // --- Casted types for easy indexing ---
 type StationRaw = { name: string; lines: string[]; position: number[] };
 type LineRaw = {
@@ -24,6 +39,8 @@ const lines = londonData.lines as LineRaw[];
 const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [stationCoords, setStationCoords] = useState<Record<string, { x: number; y: number }>>({});
+  const [hoveredStation, setHoveredStation] = useState<StationStatus | null>(null);
+  const [stationLabels, setStationLabels] = useState<StationLabel[]>([]);
   const { resolvedTheme } = useTheme();
 
   const fogColor = useMemo(
@@ -42,11 +59,28 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
 
-    const svg = d3
+    const svgContainer = d3
       .select(containerRef.current)
       .append('svg')
       .attr('width', width)
       .attr('height', height);
+
+    const zoomBehavior = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 4]) // set zoom limits
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+      });
+
+    svgContainer.call(zoomBehavior);
+
+    const g = svgContainer.append('g'); // group for panning and zooming
+
+    // Add a rectangle to capture zoom and pan events on the entire SVG area
+    g.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "transparent");
 
     // scales to map raw coords → screen coords
     const allX = Object.values(stations).map(s => s.position[0]);
@@ -80,7 +114,7 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
         })
         .filter((p): p is [number, number] => Boolean(p));
 
-      svg
+      g
         .append('path')
         .datum(pts)
         .attr('d', lineGen)
@@ -90,8 +124,10 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     });
 
     // draw stations and record their pixel coords
-    const coordsMap: Record<string, { x: number; y: number }> = {};
-    svg
+    const newCoordsMap: Record<string, { x: number; y: number }> = {};
+    const newStationLabels: StationLabel[] = [];
+
+    g
       .selectAll('circle.station')
       .data(Object.entries(stations))
       .enter()
@@ -99,22 +135,56 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
       .attr('class', 'station')
       .attr('cx', ([, s]) => xScale(s.position[0]))
       .attr('cy', ([, s]) => yScale(s.position[1]))
-      .attr('r', 6)
+      .attr('r', 5)
       .attr('fill', 'white')
       .attr('stroke', 'black')
       .attr('stroke-width', 2)
-      .each(function ([id, s]) {
-        coordsMap[id] = { x: xScale(s.position[0]), y: yScale(s.position[1]) };
+      .on('mouseover', function (event: MouseEvent, [id, s]: [string, StationRaw]) {
+        const linesData = s.lines.map(lineName => {
+          const line = lines.find(l => l.name === lineName);
+          return { name: lineName, color: line ? line.color : '#000' };
+        });
+        setHoveredStation({ name: s.name, lines: linesData });
+      })
+      .on('mouseout', function () {
+        setHoveredStation(null);
+      })
+      .each(([id, s]) => {
+
+        // Find lines for the station and their colors
+        const stationLinesWithColors = s.lines.map(lineName => {
+          const line = lines.find(l => l.name === lineName);
+          return { name: lineName, color: line ? line.color : '#000' }; // Default to black if color not found
+        });
+
+
+        const x = xScale(s.position[0]);
+        const y = yScale(s.position[1]);
+        newCoordsMap[id] = { x, y };
       });
 
-    setStationCoords(coordsMap);
+    // Add tooltips for station labels
+    const tooltip = d3
+      .select(containerRef.current)
+      .append('div')
+      .attr('class', 'tooltip')
+      .style('position', 'absolute')
+      .style('opacity', 0)
+      .style('background-color', 'white')
+      .style('border', 'solid')
+      .style('border-width', '1px')
+      .style('border-radius', '5px')
+      .style('padding', '5px')
+      .style('pointer-events', 'none'); // prevent tooltip from blocking mouse events
+
+    setStationCoords(newCoordsMap);
   }, [resolvedTheme]);
 
   // build fog-mask holes
   const fogHoles = useMemo(
     () => visitedStations.map(id => stationCoords[id]).filter(Boolean),
     [visitedStations, stationCoords]
-  );
+  ); // Removed stationLabels from dependency array
 
   return (
     <div className="w-full h-full relative">
@@ -145,6 +215,34 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
           className="transition-opacity duration-1000"
         />
       </svg>
+
+      {/* Station Status Box */}
+      <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 text-black dark:text-white p-4 rounded-md shadow-lg z-20 w-64">
+        {hoveredStation ? (
+          <>
+            <h3 className="text-lg font-bold">{hoveredStation.name}</h3>
+            <div className="mt-2">
+              {hoveredStation.lines.map((line, index) => (
+                <div key={index} className="flex items-center mb-1">
+                  <div
+                    className="w-4 h-4 mr-2 rounded-full"
+                    style={{ backgroundColor: line.color }}
+                  ></div>
+                  <span>{line.name}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Hover over a station to see details
+          </p>
+        )}
+      </div>
+
+
+
+
     </div>
   );
 };

@@ -124,9 +124,8 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     // 5️⃣ draw stations & record screen coords
     const coordsMap: Record<string, { x: number; y: number }> = {};
     g.selectAll('circle.station')
-      .data(Object.entries(stationPositions))
-      .enter()
-      .append('circle')
+      .data(Object.entries(stationPositions), (d) => d[0]) // Use station ID as key
+      .join('circle')
       .attr('class', (d) => {
         const isVisited = visitedStations.includes(d[0]);
         const hasPhotos = hasStationPhotos(d[0]);
@@ -155,20 +154,19 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
       .on('click', (_, d) => {
         handleStationClick(d[0]);
       })
-      .each(([id, pos]) => {
-        coordsMap[id] = { x: xScale(pos[0]), y: yScale(pos[1]) };
-      });
-
     // Add event listeners to station circles
-    g.selectAll('circle.station')
-      .on('mouseover', function(_, d) { // Use function() to access 'this'
+      .on('mouseover', function (_, d) { // Use function() to access 'this'
         setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]); // Explicitly cast d
       })
       .on('mouseout', () => setHoveredStation(null));
 
+    // Record screen coordinates after scaling
+    Object.entries(stationPositions).forEach(([id, pos]) => {
+      coordsMap[id] = { x: xScale(pos[0]), y: yScale(pos[1]) };
+    });
 
     setStationCoords(coordsMap);
-  }, [resolvedTheme]);
+  }, [resolvedTheme, visitedStations]);
 
   const fogHoles = useMemo(
     () => visitedStations.map((id) => stationCoords[id]).filter(Boolean),

@@ -30,6 +30,7 @@ export default function StationVerification({ onStationVerified, allStations }: 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false); // Add this state
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -44,32 +45,71 @@ export default function StationVerification({ onStationVerified, allStations }: 
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    setIsCameraReady(false);
   }, []);
 
   const startCamera = async () => {
     stopCamera();
+    setIsCameraReady(false);
+    
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      // Open modal first
+      setIsCameraOpen(true);
+      
+      // Enhanced camera constraints for better cross-device compatibility
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: 'user', // Front camera for selfies
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          aspectRatio: { ideal: 4/3 }
+        },
+        audio: false
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setIsCameraOpen(true);
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          setIsCameraReady(true);
+        };
       }
     } catch (err) {
       console.error("Error accessing camera: ", err);
-      toast({ title: "Camera Error", description: "Could not access your camera. Please check permissions.", variant: 'destructive' });
+      setIsCameraOpen(false); // Close modal on error
+      toast({ 
+        title: "Camera Error", 
+        description: "Could not access your camera. Please check permissions and try again.", 
+        variant: 'destructive' 
+      });
     }
   };
 
   const takePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
+    if (videoRef.current && canvasRef.current && isCameraReady) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      
+      // Use the video's actual dimensions for better quality
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext('2d')?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-      setPhotoDataUri(canvas.toDataURL('image/jpeg'));
-      setIsCameraOpen(false);
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Mirror the image for better selfie experience
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+        
+        // Convert to data URL with good quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        setPhotoDataUri(dataUrl);
+        setIsCameraOpen(false);
+        stopCamera();
+      }
     }
   };
 
@@ -183,19 +223,73 @@ export default function StationVerification({ onStationVerified, allStations }: 
           </form>
         </Form>
       </CardContent>
-      <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
-        <DialogContent className="p-0 max-w-lg" onInteractOutside={(e) => e.preventDefault()}>
-            <DialogHeader className="p-4 border-b">
-                <DialogTitle>Take Selfie</DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-                <video ref={videoRef} autoPlay playsInline className="w-full h-auto rounded-md aspect-video object-cover" />
-                <canvas ref={canvasRef} className="hidden" />
+      <Dialog open={isCameraOpen} onOpenChange={(open) => {
+        if (!open) {
+          stopCamera();
+        }
+        setIsCameraOpen(open);
+      }}>
+        <DialogContent className="p-0 w-[95vw] max-w-md sm:max-w-lg max-h-[90vh] mx-auto">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle>Take Your Selfie</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Hold your @username sign clearly and make sure the station is visible
+            </p>
+          </DialogHeader>
+          
+          <div className="relative p-4">
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-[4/3]">
+              {!isCameraReady && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Starting camera...</p>
+                  </div>
+                </div>
+              )}
+              
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted
+                className={`w-full h-full object-cover scale-x-[-1] ${isCameraReady ? 'opacity-100' : 'opacity-0'}`}
+              />
+              
+              {/* Overlay guide - only show when camera is ready */}
+              {isCameraReady && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-4 border-2 border-white/50 rounded-lg"></div>
+                  <div className="absolute top-4 left-4 right-4 text-white text-xs bg-black/70 rounded p-2">
+                    📄 Hold your @username sign clearly<br/>
+                    🚇 Make sure station signs are visible<br/>
+                    😊 Keep your face in frame
+                  </div>
+                </div>
+              )}
             </div>
-            <DialogFooter className="p-4 border-t">
-                <Button onClick={() => setIsCameraOpen(false)} variant="outline">Cancel</Button>
-                <Button onClick={takePhoto}>Take Photo</Button>
-            </DialogFooter>
+            <canvas ref={canvasRef} className="hidden" />
+          </div>
+          
+          <DialogFooter className="p-4 border-t gap-2">
+            <Button 
+              onClick={() => {
+                setIsCameraOpen(false);
+                stopCamera();
+              }} 
+              variant="outline" 
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={takePhoto} 
+              className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
+              disabled={!isCameraReady}
+            >
+              📸 Take Photo
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>

@@ -132,9 +132,8 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
 
     // Add event listeners to station circles
     g.selectAll('circle.station')
-      .on('mouseover', (_, d) => {
-        // No need to setHoveredStation here as it's handled in the .each loop
-        // setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]); // Explicitly cast d
+      .on('mouseover', function(_, d) { // Use function() to access 'this'
+        setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]); // Explicitly cast d
       })
       .on('mouseout', () => setHoveredStation(null));
 

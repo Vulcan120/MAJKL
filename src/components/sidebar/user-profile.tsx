@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useToast } from '@/hooks/use-toast';
 import { 
   Ticket, 
@@ -45,6 +46,7 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState("I'm on a mission to explore every single tube station in London! 🚇");
   const [tempBio, setTempBio] = useState(bio);
+  const [isMobileCollapsed, setIsMobileCollapsed] = useState(true);
   
   // Profile picture states
   const [isProfilePicModalOpen, setIsProfilePicModalOpen] = useState(false);
@@ -68,6 +70,14 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
       .replace('and', ' & ')
   );
 
+  // Separate formatted badges for display in collapsible
+  const formattedBadgesForDisplay = collectedBadges.map(stationId => 
+    stationId
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+      .replace('and', ' & ')
+  );
+
   // Mock data for demonstration (we'll implement this later)
   const totalStations = 272; // Total London tube stations
   const visitedStations = collectedBadges.length;
@@ -77,6 +87,7 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
   const visitLog: VisitLog[] = [
     { stationName: 'Victoria', timestamp: new Date('2024-01-15T10:30:00'), verified: true },
     { stationName: 'Pimlico', timestamp: new Date('2024-01-15T11:45:00'), verified: true },
+    { stationName: 'Paddington', timestamp: new Date('2024-01-15T11:45:00'), verified: true },
   ];
 
   // Mock streak data (we'll implement this later)
@@ -236,45 +247,335 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
   const currentAvatarSrc = profilePicture || 
     (publicKey ? `https://api.dicebear.com/8.x/pixel-art/svg?seed=${publicKey.toBase58()}` : `https://api.dicebear.com/8.x/pixel-art/svg`);
 
+  // Check if it's a mobile view (can refine with a useMobile hook)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768; // Example breakpoint
+
   return (
     <>
-      <Card className="border-none shadow-none">
-        <CardHeader className="p-0">
-          <div 
-            className="flex items-center gap-4 cursor-pointer hover:bg-accent/10 p-2 rounded-lg transition-colors"
-            onClick={() => setIsProfileOpen(true)}
-          >
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={currentAvatarSrc} alt="User Avatar" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-lg font-headline">{connected ? 'Wallet Connected' : 'Connect Wallet'}</CardTitle>
-              <CardDescription className="w-48 truncate text-xs">
-                {publicKey ? publicKey.toBase58() : 'No wallet connected'}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 mt-6">
-          <h3 className="font-semibold mb-3 flex items-center gap-2 text-md">
-            <Ticket className="w-5 h-5 text-primary" /> Collected Badges ({collectedBadges.length})
-          </h3>
-          <ScrollArea className="h-40 rounded-md border p-3">
-            <div className="flex flex-wrap gap-2">
-              {collectedBadges.length > 0 ? (
-                formattedBadges.map(stationName => (
-                  <Badge key={stationName} variant="secondary" className="capitalize text-sm bg-accent/20 text-accent-foreground border-accent/30">
-                    {stationName}
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground p-2">No badges collected yet. Visit a station to start!</p>
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+      <Collapsible
+        open={isMobile ? !isMobileCollapsed : true} // Collapsed on mobile by default, open on desktop
+        onOpenChange={setIsMobileCollapsed}
+        className="border-none shadow-none"
+      >
+        {isMobile && (
+           <CollapsibleTrigger asChild>
+             <div className="flex items-center gap-4 cursor-pointer hover:bg-accent/10 p-2 rounded-lg transition-colors mb-4 w-full">
+               <Avatar className="h-10 w-10">
+                 <AvatarImage src={currentAvatarSrc} alt="User Avatar" />
+                 <AvatarFallback>U</AvatarFallback>
+               </Avatar>
+               <div className="flex-1">
+                 <h3 className="text-base font-headline">{connected ? 'Wallet Connected' : 'Connect Wallet'}</h3>
+                 <p className="w-40 truncate text-xs text-muted-foreground">
+                   {publicKey ? publicKey.toBase58() : 'No wallet connected'}
+                 </p>
+               </div>
+               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Ticket className="w-4 h-4" />
+                ({collectedBadges.length})
+               </div>
+             </div>
+           </CollapsibleTrigger>
+        )}
+
+        <CollapsibleContent>
+          <Card className="border-none shadow-none p-0">
+             {!isMobile && ( // Only show the header details directly on desktop
+              <CardHeader className="p-0 pb-4">
+                <div 
+                  className="flex items-center gap-4 cursor-pointer hover:bg-accent/10 p-2 rounded-lg transition-colors"
+                  onClick={() => setIsProfileOpen(true)}
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={currentAvatarSrc} alt="User Avatar" />
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle className="text-lg font-headline">{connected ? 'Wallet Connected' : 'Connect Wallet'}</CardTitle>
+                    <CardDescription className="w-48 truncate text-xs">
+                      {publicKey ? publicKey.toBase58() : 'No wallet connected'}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+             )}
+            <CardContent className="p-0 space-y-6">
+              {/* Exploration Progress */}
+               <div className="flex items-center justify-between">
+                 <div className="flex-1">
+                   <h3 className="font-semibold mb-2 flex items-center gap-2 text-md">
+                     <MapPin className="w-5 h-5 text-primary" /> Exploration Progress
+                   </h3>
+                   <div className="flex justify-between items-center">
+                     <span className="text-sm font-medium">
+                       {visitedStations} of {totalStations} stations visited
+                     </span>
+                     <Badge variant="outline" className="text-primary">
+                       {explorationPercentage}%
+                     </Badge>
+                   </div>
+                   <Progress value={explorationPercentage} className="h-2 mt-2" />
+                 </div>
+
+                 {/* Tube Roundel Streak Ring */}
+                 <div className="ml-6 flex flex-col items-center">
+                   <div className="relative w-20 h-20">
+                     {/* Outer streak ring */}
+                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+                       {/* Background ring */}
+                       <circle
+                         cx="40"
+                         cy="40"
+                         r="35"
+                         stroke="currentColor"
+                         strokeWidth="3"
+                         fill="none"
+                         className="text-gray-200 dark:text-gray-700"
+                       />
+                       {/* Streak progress ring */}
+                       <circle
+                         cx="40"
+                         cy="40"
+                         r="35"
+                         stroke="currentColor"
+                         strokeWidth="3"
+                         fill="none"
+                         strokeDasharray={`${2 * Math.PI * 35}`}
+                         strokeDashoffset={`${2 * Math.PI * 35 * (1 - (currentStreak / streakGoal))}`}
+                         className={`transition-all duration-1000 ease-out ${
+                           currentStreak >= streakGoal ? 'text-green-500' : 'text-orange-500'
+                         }`}
+                         strokeLinecap="round"
+                       />
+                     </svg>
+
+                     {/* London Underground Roundel */}
+                     <div className="absolute inset-0 flex items-center justify-center">
+                       <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center relative">
+                         {/* Blue bar */}
+                         <div className="absolute w-16 h-3 bg-blue-800 rounded-sm"></div>
+                         {/* Streak number */}
+                         <div className="relative z-10 text-white font-bold text-lg">
+                           {currentStreak}
+                         </div>
+                       </div>
+                     </div>
+
+                     {/* Streak particles effect */}
+                     {currentStreak > 0 && (
+                       <div className="absolute inset-0 pointer-events-none">
+                         {[...Array(3)].map((_, i) => (
+                           <div
+                             key={i}
+                             className="absolute w-1 h-1 bg-orange-400 rounded-full animate-ping"
+                             style={{
+                               top: `${20 + Math.random() * 40}%`,
+                               left: `${20 + Math.random() * 40}%`,
+                               animationDelay: `${i * 0.5}s`,
+                               animationDuration: '2s'
+                             }}
+                           />
+                         ))}
+                       </div>
+                     )}
+                   </div>
+
+                   <div className="text-center mt-2">
+                     <p className="text-xs font-medium">
+                       {currentStreak > 0 ? `${currentStreak} Day Streak` : 'Start Streak'}
+                     </p>
+                     <p className="text-xs text-muted-foreground">
+                       {currentStreak >= streakGoal ? '🎉 Goal!' : `${streakGoal - currentStreak} to goal`}
+                     </p>
+                   </div>
+                 </div>
+               </div>
+
+              {/* Collected Badges */}
+              <div>
+                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-md">
+                   <Ticket className="w-5 h-5 text-primary" /> Collected Badges ({collectedBadges.length})
+                 </h3>
+                 <ScrollArea className="h-40 rounded-md border p-3">
+                   <div className="flex flex-wrap gap-2">
+                     {collectedBadges.length > 0 ? (
+                       formattedBadgesForDisplay.map(stationName => (
+                         <Badge key={stationName} variant="secondary" className="capitalize text-sm bg-accent/20 text-accent-foreground border-accent/30">
+                           {stationName}
+                         </Badge>
+                       ))
+                     ) : (
+                       <p className="text-sm text-muted-foreground p-2">No badges collected yet. Visit a station to start!</p>
+                     )}
+                   </div>
+                 </ScrollArea>
+               </div>
+
+              {/* Visit Log */}
+               <Card>
+                 <CardHeader className="pb-3">
+                   <CardTitle className="text-lg flex items-center gap-2">
+                     <Clock className="w-5 h-5 text-primary" />
+                     Visit Log
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                   <ScrollArea className="h-40">
+                     {visitLog.length > 0 ? (
+                       <div className="space-y-3">
+                         {visitLog.map((visit, index) => (
+                           <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                             <div className="flex items-center gap-3">
+                               <div className={`w-2 h-2 rounded-full ${visit.verified ? 'bg-green-500' : 'bg-gray-400'}`} />
+                               <div>
+                                 <p className="font-medium text-sm">{visit.stationName}</p>
+                                 <p className="text-xs text-muted-foreground">
+                                   {visit.timestamp.toLocaleDateString()} at {visit.timestamp.toLocaleTimeString()}
+                                 </p>
+                               </div>
+                             </div>
+                             <Badge variant={visit.verified ? "default" : "secondary"} className="text-xs">
+                               {visit.verified ? 'Verified' : 'Pending'}
+                             </Badge>
+                           </div>
+                         ))}
+                       </div>
+                     ) : (
+                       <p className="text-sm text-muted-foreground text-center py-8">
+                         No station visits yet. Start exploring!
+                       </p>
+                     )}
+                   </ScrollArea>
+                 </CardContent>
+               </Card>
+
+              {/* Bio Section */}
+               <Card>
+                 <CardHeader className="pb-3">
+                   <CardTitle className="text-lg flex items-center justify-between">
+                     <div className="flex items-center gap-2">
+                       <Edit3 className="w-5 h-5 text-primary" />
+                       My Journey
+                     </div>
+                     {!isEditingBio && (
+                       <Button 
+                         variant="ghost" 
+                         size="sm"
+                         onClick={() => setIsEditingBio(true)}
+                       >
+                         <Edit3 className="w-4 h-4" />
+                       </Button>
+                     )}
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                   {isEditingBio ? (
+                     <div className="space-y-3">
+                       <Textarea
+                         value={tempBio}
+                         onChange={(e) => setTempBio(e.target.value)}
+                         placeholder="Why do you want to visit every tube station?"
+                         className="min-h-[80px]"
+                       />
+                       <div className="flex gap-2">
+                         <Button size="sm" onClick={handleSaveBio}>
+                           <Save className="w-4 h-4 mr-2" />
+                           Save
+                         </Button>
+                         <Button size="sm" variant="outline" onClick={handleCancelBio}>
+                           <X className="w-4 h-4 mr-2" />
+                           Cancel
+                         </Button>
+                       </div>
+                     </div>
+                   ) : (
+                     <p className="text-sm text-muted-foreground leading-relaxed">
+                       {bio}
+                     </p>
+                   )}
+                 </CardContent>
+               </Card>
+
+              {/* Add Theme Selection Section */}
+               <Card>
+                 <CardHeader className="pb-3">
+                   <CardTitle className="text-lg flex items-center gap-2">
+                     <Palette className="w-5 h-5 text-primary" />
+                     Tube Line Themes
+                   </CardTitle>
+                   <CardDescription>
+                     Choose your favorite tube line theme. Complete lines to unlock new themes!
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                     {availableThemes.map((theme) => (
+                       <div
+                         key={theme.id}
+                         className={`relative p-3 rounded-lg border-2 cursor-pointer transition-all hover:scale-105 ${
+                           currentTheme.id === theme.id
+                             ? 'border-primary shadow-lg'
+                             : 'border-border hover:border-primary/50'
+                         } ${!theme.unlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                         onClick={() => theme.unlocked && setTheme(theme.id)}
+                         style={{
+                           backgroundColor: theme.unlocked ? `${theme.color}15` : undefined
+                         }}
+                       >
+                         {/* Theme color preview */}
+                         <div
+                           className="w-full h-8 rounded mb-2"
+                           style={{
+                             backgroundColor: theme.color,
+                             color: theme.textColor
+                           }}
+                         >
+                           <div className="flex items-center justify-center h-full text-xs font-semibold">
+                             {theme.name}
+                           </div>
+                         </div>
+
+                         {/* Theme details */}
+                         <div className="space-y-1">
+                           <p className="font-medium text-sm">{theme.displayName}</p>
+                           <p className="text-xs text-muted-foreground">{theme.description}</p>
+                         </div>
+
+                         {/* Selected indicator */}
+                         {currentTheme.id === theme.id && (
+                           <div className="absolute top-2 right-2">
+                             <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                               <Check className="w-3 h-3 text-primary-foreground" />
+                             </div>
+                           </div>
+                         )}
+
+                         {/* Locked indicator */}
+                         {!theme.unlocked && (
+                           <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
+                             <div className="bg-black/60 text-white px-2 py-1 rounded text-xs">
+                               🔒 Complete {theme.name} Line
+                             </div>
+                           </div>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+
+                   <div className="mt-4 p-3 bg-muted rounded-lg">
+                     <p className="text-sm text-muted-foreground">
+                       <strong>Current theme:</strong> {currentTheme.displayName}
+                     </p>
+                     <p className="text-xs text-muted-foreground mt-1">
+                       {currentTheme.description}
+                     </p>
+                   </div>
+                 </CardContent>
+               </Card>
+            </CardContent>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Profile Modal */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
@@ -314,97 +615,6 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
 
 
             {/* Tube Roundel Streak Display */}
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="font-semibold mb-3 flex items-center gap-2 text-md">
-                  <MapPin className="w-5 h-5 text-primary" /> Exploration Progress
-                </h3>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">
-                    {visitedStations} of {totalStations} stations visited
-                  </span>
-                  <Badge variant="outline" className="text-primary">
-                    {explorationPercentage}%
-                  </Badge>
-                </div>
-                <Progress value={explorationPercentage} className="h-2 mt-2" />
-              </div>
-              
-              {/* Tube Roundel Streak Ring */}
-              <div className="ml-6 flex flex-col items-center">
-                <div className="relative w-20 h-20">
-                  {/* Outer streak ring */}
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
-                    {/* Background ring */}
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="35"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      className="text-gray-200 dark:text-gray-700"
-                    />
-                    {/* Streak progress ring */}
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="35"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      strokeDasharray={`${2 * Math.PI * 35}`}
-                      strokeDashoffset={`${2 * Math.PI * 35 * (1 - (currentStreak / streakGoal))}`}
-                      className={`transition-all duration-1000 ease-out ${
-                        currentStreak >= streakGoal ? 'text-green-500' : 'text-orange-500'
-                      }`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  
-                  {/* London Underground Roundel */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center relative">
-                      {/* Blue bar */}
-                      <div className="absolute w-16 h-3 bg-blue-800 rounded-sm"></div>
-                      {/* Streak number */}
-                      <div className="relative z-10 text-white font-bold text-lg">
-                        {currentStreak}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Streak particles effect */}
-                  {currentStreak > 0 && (
-                    <div className="absolute inset-0 pointer-events-none">
-                      {[...Array(3)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="absolute w-1 h-1 bg-orange-400 rounded-full animate-ping"
-                          style={{
-                            top: `${20 + Math.random() * 40}%`,
-                            left: `${20 + Math.random() * 40}%`,
-                            animationDelay: `${i * 0.5}s`,
-                            animationDuration: '2s'
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="text-center mt-2">
-                  <p className="text-xs font-medium">
-                    {currentStreak > 0 ? `${currentStreak} Day Streak` : 'Start Streak'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {currentStreak >= streakGoal ? '🎉 Goal!' : `${streakGoal - currentStreak} to goal`}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Visit Log */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -486,83 +696,6 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
                     {bio}
                   </p>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Add Theme Selection Section */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Palette className="w-5 h-5 text-primary" />
-                  Tube Line Themes
-                </CardTitle>
-                <CardDescription>
-                  Choose your favorite tube line theme. Complete lines to unlock new themes!
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {availableThemes.map((theme) => (
-                    <div
-                      key={theme.id}
-                      className={`relative p-3 rounded-lg border-2 cursor-pointer transition-all hover:scale-105 ${
-                        currentTheme.id === theme.id 
-                          ? 'border-primary shadow-lg' 
-                          : 'border-border hover:border-primary/50'
-                      } ${!theme.unlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      onClick={() => theme.unlocked && setTheme(theme.id)}
-                      style={{
-                        backgroundColor: theme.unlocked ? `${theme.color}15` : undefined
-                      }}
-                    >
-                      {/* Theme color preview */}
-                      <div 
-                        className="w-full h-8 rounded mb-2"
-                        style={{ 
-                          backgroundColor: theme.color,
-                          color: theme.textColor
-                        }}
-                      >
-                        <div className="flex items-center justify-center h-full text-xs font-semibold">
-                          {theme.name}
-                        </div>
-                      </div>
-                      
-                      {/* Theme details */}
-                      <div className="space-y-1">
-                        <p className="font-medium text-sm">{theme.displayName}</p>
-                        <p className="text-xs text-muted-foreground">{theme.description}</p>
-                      </div>
-
-                      {/* Selected indicator */}
-                      {currentTheme.id === theme.id && (
-                        <div className="absolute top-2 right-2">
-                          <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                            <Check className="w-3 h-3 text-primary-foreground" />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Locked indicator */}
-                      {!theme.unlocked && (
-                        <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
-                          <div className="bg-black/60 text-white px-2 py-1 rounded text-xs">
-                            🔒 Complete {theme.name} Line
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-4 p-3 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Current theme:</strong> {currentTheme.displayName}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {currentTheme.description}
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </div>

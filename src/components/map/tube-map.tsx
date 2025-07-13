@@ -113,13 +113,19 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
       .data(Object.entries(stationPositions))
       .enter()
       .append('circle')
-      .attr('class', 'station')
+      .attr('class', (d) => `station ${visitedStations.includes(d[0]) ? 'visited' : ''}`) // Add 'visited' class
       .attr('cx', ([, pos]) => xScale(pos[0]))
       .attr('cy', ([, pos]) => yScale(pos[1]))
-      .attr('r', 5)
-      .attr('fill', 'white')
+      .attr('r', (d) => (visitedStations.includes(d[0]) ? 7 : 5)) // Larger radius for visited
+      .attr('fill', (d) => (visitedStations.includes(d[0]) ? 'yellow' : 'white')) // Different fill color for visited
       .attr('stroke', 'black')
       .attr('stroke-width', 2)
+      .style('filter', (d) => (visitedStations.includes(d[0]) ? 'url(#glow)' : null)) // Apply glow filter for visited
+      .style('transition', 'r 0.2s ease-in-out, fill 0.2s ease-in-out') // Add transition for animation
+      .on('mouseover', function(_, d) { // Use function() to access 'this'
+        d3.select(this).transition().duration(200).attr('r', visitedStations.includes(d[0]) ? 10 : 7); // Further increase size on hover for visited
+        setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]);
+      })
       .each(([id, pos]) => {
         coordsMap[id] = { x: xScale(pos[0]), y: yScale(pos[1]) };
       });
@@ -127,7 +133,8 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     // Add event listeners to station circles
     g.selectAll('circle.station')
       .on('mouseover', (_, d) => {
-        setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]); // Explicitly cast d
+        // No need to setHoveredStation here as it's handled in the .each loop
+        // setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]); // Explicitly cast d
       })
       .on('mouseout', () => setHoveredStation(null));
 

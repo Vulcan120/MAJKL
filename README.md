@@ -3,6 +3,7 @@
 **Version:** 2.0.0  
 **Team:** MAJKL  
 **Event:** BrunelHack 2025
+
 **Made By** Alberto, Kenny, Lee, Mubarak & Jaden
 
 ## 🚇 Overview

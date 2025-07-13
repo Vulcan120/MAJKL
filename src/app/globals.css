@@ -95,3 +95,26 @@
     padding: 0.5rem 1rem;
     border-radius: var(--radius);
 }
+
+:root {
+  /* Tube theme variables */
+  --tube-primary: #FF6B6B;
+  --tube-primary-text: #FFFFFF;
+}
+
+/* Update your existing accent classes to use tube theme variables */
+.bg-accent {
+  background-color: var(--tube-primary) !important;
+}
+
+.text-accent-foreground {
+  color: var(--tube-primary-text) !important;
+}
+
+.border-accent {
+  border-color: var(--tube-primary) !important;
+}
+
+.text-primary {
+  color: var(--tube-primary) !important;
+}

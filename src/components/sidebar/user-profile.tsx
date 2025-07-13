@@ -11,6 +11,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { getVisitLog, type VisitLogEntry } from '@/lib/utils';
+import StationTokens from './station-tokens';
 import { 
   Ticket, 
   MapPin, 
@@ -23,7 +25,8 @@ import {
   Upload,
   Loader2,
   Palette, // Add this
-  Check     // Add this
+  Check,     // Add this
+  Train     // Add this
 } from 'lucide-react';
 import { useTubeTheme } from '@/contexts/tube-theme-context';
 import StationTokens from './station-tokens';
@@ -33,12 +36,7 @@ interface UserProfileProps {
   collectedBadges: string[];
 }
 
-// Mock data structure for visit log (we'll implement this later)
-interface VisitLog {
-  stationName: string;
-  timestamp: Date;
-  verified: boolean;
-}
+// Visit log is now imported from utils
 
 export default function UserProfile({ collectedBadges }: UserProfileProps) {
   const { publicKey, connected } = useWallet();
@@ -75,11 +73,24 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
   const visitedStations = collectedBadges.length;
   const explorationPercentage = Math.round((visitedStations / totalStations) * 100);
 
-  // Mock visit log (we'll implement this later)
-  const visitLog: VisitLog[] = [
-    { stationName: 'Victoria', timestamp: new Date('2024-01-15T10:30:00'), verified: true },
-    { stationName: 'Pimlico', timestamp: new Date('2024-01-15T11:45:00'), verified: true },
-  ];
+  // Real visit log data from localStorage
+  const [visitLog, setVisitLog] = useState<VisitLogEntry[]>([]);
+  
+  // Load visit log data and refresh it periodically
+  useEffect(() => {
+    const loadVisitLog = () => {
+      const log = getVisitLog();
+      setVisitLog(log);
+    };
+    
+    // Load initial data
+    loadVisitLog();
+    
+    // Set up interval to refresh visit log (in case it's updated from other components)
+    const interval = setInterval(loadVisitLog, 2000); // Check every 2 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Mock streak data (we'll implement this later)
   const calculateStreaks = () => {
@@ -260,21 +271,28 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
         </CardHeader>
         <CardContent className="p-0 mt-6">
           <h3 className="font-semibold mb-3 flex items-center gap-2 text-md">
-            <Ticket className="w-5 h-5 text-primary" /> Collected Badges ({collectedBadges.length})
+            <Train className="w-5 h-5 text-primary" /> Exploration Progress
           </h3>
-          <ScrollArea className="h-40 rounded-md border p-3">
-            <div className="flex flex-wrap gap-2">
-              {collectedBadges.length > 0 ? (
-                formattedBadges.map(stationName => (
-                  <Badge key={stationName} variant="secondary" className="capitalize text-sm bg-accent/20 text-accent-foreground border-accent/30">
-                    {stationName}
-                  </Badge>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground p-2">No badges collected yet. Visit a station to start!</p>
-              )}
+          
+          <div className="bg-muted/50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">London Underground</span>
+              <span className="text-sm font-mono text-primary">{visitedStations}/{totalStations}</span>
             </div>
-          </ScrollArea>
+            <div className="relative">
+              <Progress value={explorationPercentage} className="h-3" />
+              {/* Train icon on the progress bar */}
+              <div 
+                className="absolute top-0 flex items-center justify-center w-6 h-3 transition-all duration-300"
+                style={{ left: `${Math.max(0, Math.min(93, explorationPercentage - 3))}%` }}
+              >
+                <Train className="w-4 h-4 text-primary z-10" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {explorationPercentage}% of the network explored
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -406,6 +424,9 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
               </div>
             </div>
 
+            {/* Station Tokens */}
+            <StationTokens />
+
             {/* Visit Log */}
             <Card>
               <CardHeader className="pb-3">
@@ -496,7 +517,7 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
 
             {/* Achievements Section */}
             <Achievements />
-
+            
             {/* Add Theme Selection Section */}
             <Card>
               <CardHeader className="pb-3">

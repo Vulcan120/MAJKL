@@ -1,4 +1,8 @@
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Train } from 'lucide-react';
 
 export interface LineData {
   name: string;
@@ -12,24 +16,63 @@ interface TubeLineKeyProps {
 }
 
 const TubeLineKey: React.FC<TubeLineKeyProps> = ({ lineData }) => {
+  // Sort lines by name for consistent display
+  const sortedLines = [...lineData].sort((a, b) => a.formattedName.localeCompare(b.formattedName));
+
   return (
-    <div className="h-full w-full bg-card p-4 shadow-lg overflow-y-auto">
-      <h3 className="text-lg font-semibold mb-4">Tube Lines Key</h3>
-      <ul>
-        {lineData.map((line) => (
-          <li key={line.name} className="flex items-center gap-2 mb-2 text-sm">
-            <span
-              className="w-4 h-4 rounded-full flex-shrink-0"
-              style={{ backgroundColor: line.color }}
-            ></span>
-            <span className="flex-grow truncate">{line.formattedName}</span>
-            <span className="text-muted-foreground">
-              ({line.count} stations)
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Train className="w-5 h-5 text-primary" />
+          Tube Lines
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ScrollArea className="h-[calc(100vh-200px)] px-6">
+          <div className="space-y-3 pb-4">
+            {sortedLines.map((line) => (
+              <div 
+                key={line.name} 
+                className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:bg-muted/50"
+              >
+                {/* Line color indicator */}
+                <div className="flex-shrink-0 relative">
+                  <div
+                    className="w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 shadow-sm"
+                    style={{ backgroundColor: line.color }}
+                  />
+                  <div
+                    className="absolute inset-0 w-4 h-4 rounded-full opacity-20"
+                    style={{ backgroundColor: line.color }}
+                  />
+                </div>
+                
+                {/* Line info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm truncate">{line.formattedName}</h4>
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs ml-2 flex-shrink-0"
+                      style={{ 
+                        backgroundColor: `${line.color}20`,
+                        borderColor: `${line.color}40`,
+                        color: line.color
+                      }}
+                    >
+                      {line.count}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {line.count} stations
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 };
 

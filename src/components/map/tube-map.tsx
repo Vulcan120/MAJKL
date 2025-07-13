@@ -9,6 +9,8 @@ import { hasStationPhotos } from '@/lib/utils';
 
 interface TubeMapProps {
   visitedStations: string[];
+  userLocation: { lat: number; lon: number } | null;
+
 }
 
 type LineRaw = {

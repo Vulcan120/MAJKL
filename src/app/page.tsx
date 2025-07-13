@@ -1,10 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header';
+import londonData from '@/lib/london.json';
 import TubeMap from '@/components/map/tube-map';
 import UserProfile from '@/components/sidebar/user-profile';
 import StationVerification from '@/components/sidebar/station-verification';
+import TubeLineKey from '@/components/sidebar/tube-line-key.tsx';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Rocket } from 'lucide-react';
 
@@ -20,23 +22,36 @@ export default function Home() {
     }
   };
 
+  const lineStationCounts = useMemo(() => {
+    return londonData.lines.map((line: any) => ({
+      // Format the line name: replace hyphens with spaces and capitalize each word
+      formattedName: line.name
+        .replace(/-/g, ' ')
+        .split(' ')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' '),
+      color: line.color,
+      count: line.nodes.length,
+    }));
+  }, [londonData.lines]);
+
   const sidebarContent = (
     <>
       <UserProfile collectedBadges={visitedStations} />
-      <StationVerification onStationVerified={handleStationVerified} allStations={ALL_STATIONS} />
+ <StationVerification onStationVerified={handleStationVerified} allStations={ALL_STATIONS} />
     </>
   );
 
   return (
     <div className="flex h-screen flex-col bg-background font-body text-foreground">
       <Header />
-      <main className="grid flex-1 grid-cols-1 md:grid-cols-[24rem_1fr] overflow-hidden">
+      <main className="grid flex-1 grid-cols-1 md:grid-cols-[24rem_1fr_16rem] overflow-hidden">
         <aside className="hidden md:flex h-full flex-col gap-8 overflow-y-auto border-r bg-card p-6">
           {sidebarContent}
         </aside>
 
         <div className="relative flex flex-1 flex-col overflow-hidden">
-          <div className="flex items-center gap-4 border-b p-4">
+          <div className="flex items-center gap-4 border-b p-4 md:pr-0">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="md:hidden">
@@ -52,6 +67,26 @@ export default function Home() {
           <div className="relative flex-1 bg-gray-100 dark:bg-gray-900">
             <TubeMap visitedStations={visitedStations} />
           </div>
+        </div>
+
+        {/* Right-hand sidebar for line key on larger screens */}
+        <aside className="hidden md:flex h-full flex-col gap-8 overflow-y-auto border-l bg-card p-6 w-64 flex-shrink-0 md:col-start-3">
+ <TubeLineKey lineData={lineStationCounts} />
+        </aside>
+
+        {/* Mobile button for line key modal */}
+ <div className="md:hidden absolute bottom-4 right-4 z-20">
+ <Sheet>
+ <SheetTrigger asChild>
+ <Button variant="outline" size="lg" className="rounded-full shadow-lg">
+ <Rocket className="h-5 w-5 mr-2" />
+                  Tube Lines
+ </Button>
+ </SheetTrigger>
+ <SheetContent side="right" className="w-[24rem] p-6 pt-10 overflow-y-auto">
+ <TubeLineKey lineData={lineStationCounts} />
+ </SheetContent>
+ </Sheet>
         </div>
       </main>
     </div>

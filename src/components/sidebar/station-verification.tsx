@@ -24,13 +24,133 @@ interface StationVerificationProps {
   allStations: string[];
 }
 
+const VerificationCircle = ({ 
+  progress, 
+  status, 
+  isSuccess, 
+  isFailed 
+}: { 
+  progress: number; 
+  status: string; 
+  isSuccess: boolean; 
+  isFailed: boolean; 
+}) => {
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center space-y-3 py-4">
+      <div className="relative">
+        <svg 
+          width="100" 
+          height="100" 
+          className="transform -rotate-90"
+        >
+          {/* Background circle */}
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="none"
+            className="text-gray-200 dark:text-gray-700"
+          />
+          
+          {/* Animated progress circle */}
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            stroke="currentColor"
+            strokeWidth="3"
+            fill="none"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            className={`transition-all duration-500 ease-out ${
+              isSuccess ? 'text-green-500' : 
+              isFailed ? 'text-red-500' : 
+              'text-blue-500'
+            }`}
+            style={{
+              strokeLinecap: 'round',
+              transform: isFailed ? 'scale(0.8)' : 'scale(1)',
+              opacity: isFailed ? 0.5 : 1,
+            }}
+          />
+          
+          {/* Success checkmark */}
+          {isSuccess && (
+            <g className="animate-in fade-in duration-300">
+              <CheckCircle 
+                size={24} 
+                className="text-green-500" 
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+            </g>
+          )}
+          
+          {/* Failure X */}
+          {isFailed && (
+            <g className="animate-in fade-in duration-300">
+              <XCircle 
+                size={24} 
+                className="text-red-500" 
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+            </g>
+          )}
+        </svg>
+        
+        {/* Center icon/content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {!isSuccess && !isFailed && (
+            <div className="text-center">
+              <div className="animate-pulse">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mb-1"></div>
+                <div className="w-1 h-1 bg-blue-400 rounded-full mx-auto"></div>
+              </div>
+            </div>
+          )}
+          
+          {isSuccess && (
+            <CheckCircle size={24} className="text-green-500 animate-in zoom-in duration-300" />
+          )}
+          
+          {isFailed && (
+            <XCircle size={24} className="text-red-500 animate-in zoom-in duration-300" />
+          )}
+        </div>
+      </div>
+      
+      <p className="text-sm text-muted-foreground text-center animate-in fade-in duration-200">
+        {status}
+      </p>
+    </div>
+  );
+};
+
 export default function StationVerification({ onStationVerified, allStations }: StationVerificationProps) {
   const { connected } = useWallet();
   const { toast } = useToast();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCameraReady, setIsCameraReady] = useState(false); // Add this state
+  const [isCameraReady, setIsCameraReady] = useState(false);
+  const [verificationProgress, setVerificationProgress] = useState(0);
+  const [verificationStatus, setVerificationStatus] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -118,30 +238,75 @@ export default function StationVerification({ onStationVerified, allStations }: 
       toast({ title: "No Photo", description: "Please take a photo to submit.", variant: 'destructive' });
       return;
     }
-    if (!connected) {
-        toast({ title: "Wallet Not Connected", description: "Please connect your wallet to verify.", variant: 'destructive' });
-        return;
-    }
+    
     setIsLoading(true);
+    setVerificationProgress(0);
+    setVerificationStatus('Initializing verification...');
+    
     try {
+      // Progress animation sequence
+      setVerificationProgress(15);
+      setVerificationStatus('Sending image to AI...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setVerificationProgress(35);
+      setVerificationStatus('Analyzing image authenticity...');
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      setVerificationProgress(60);
+      setVerificationStatus('Checking station signs...');
+      
       const result = await verifyStationImageAction({
         photoDataUri,
         stationName: data.stationName,
         username: data.username,
       });
-
+      
+      setVerificationProgress(85);
+      setVerificationStatus('Verifying username...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setVerificationProgress(100);
+      
       if (result.isAuthentic) {
-        toast({ title: `Success!`, description: `${data.stationName} badge earned!`, className: 'bg-green-500 text-white' });
+        setVerificationStatus('✅ Station verified successfully!');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Show success state
+        
+        toast({ 
+          title: `🎉 Verified!`, 
+          description: `${data.stationName} station confirmed!`, 
+          className: 'bg-green-500 text-white' 
+        });
         onStationVerified(data.stationName);
         form.reset();
         setPhotoDataUri(null);
       } else {
-        toast({ title: "Verification Failed", description: result.verificationResult.slice(0, 100), variant: 'destructive' });
+        setVerificationStatus('❌ Verification failed');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Show failure state
+        
+        toast({ 
+          title: "❌ Verification Failed", 
+          description: result.verificationResult.slice(0, 100) + "...", 
+          variant: 'destructive' 
+        });
       }
     } catch (error) {
-      toast({ title: "Error", description: "An unexpected error occurred during verification.", variant: 'destructive' });
+      setVerificationProgress(0);
+      setVerificationStatus('💥 Verification error occurred');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({ 
+        title: "Error", 
+        description: "An unexpected error occurred during verification.", 
+        variant: 'destructive' 
+      });
     } finally {
-      setIsLoading(false);
+      // Reset after a delay
+      setTimeout(() => {
+        setIsLoading(false);
+        setVerificationProgress(0);
+        setVerificationStatus('');
+      }, 1500);
     }
   };
 
@@ -205,20 +370,39 @@ export default function StationVerification({ onStationVerified, allStations }: 
             
             {photoDataUri ? (
               <div className="relative group">
-                <img src={photoDataUri} alt="Your selfie" className="rounded-md" />
+                <img src={photoDataUri} alt="Your selfie" className="rounded-md w-full" />
                 <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setPhotoDataUri(null)}>
                   <XCircle className="h-4 w-4" />
                 </Button>
               </div>
-            ): null}
+            ) : null}
 
             <Button type="button" variant="outline" onClick={startCamera} className="w-full">
               <Camera className="mr-2 h-4 w-4" /> {photoDataUri ? 'Retake Photo' : 'Open Camera'}
             </Button>
 
+            {/* Replace the progress bar section with this animated circle */}
+            {isLoading && (
+              <VerificationCircle 
+                progress={verificationProgress}
+                status={verificationStatus}
+                isSuccess={verificationProgress === 100 && verificationStatus.includes('✅')}
+                isFailed={verificationStatus.includes('❌') || verificationStatus.includes('💥')}
+              />
+            )}
+
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={!photoDataUri || isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-              Verify My Visit
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Verify My Visit
+                </>
+              )}
             </Button>
           </form>
         </Form>

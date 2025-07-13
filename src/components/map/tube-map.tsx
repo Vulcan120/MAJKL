@@ -4,6 +4,8 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
 import { useTheme } from 'next-themes';
 import londonData from '@/lib/london.json';
+import StationPhotoModal from '@/components/map/station-photo-modal';
+import { hasStationPhotos } from '@/lib/utils';
 
 interface TubeMapProps {
   visitedStations: string[];
@@ -27,7 +29,17 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
   const [stationDetails, setStationDetails] = useState<Record<string, { name: string; lines: { color: string; name: string }[] }>>(
     {}
   );
+  const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const { resolvedTheme } = useTheme();
+
+  const handleStationClick = (stationId: string) => {
+    // Only allow clicking on verified stations
+    if (visitedStations.includes(stationId)) {
+      setSelectedStation(stationId);
+      setIsPhotoModalOpen(true);
+    }
+  };
 
   const fogColor = useMemo(
     () =>
@@ -113,18 +125,33 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
       .data(Object.entries(stationPositions))
       .enter()
       .append('circle')
-      .attr('class', (d) => `station ${visitedStations.includes(d[0]) ? 'visited' : ''}`) // Add 'visited' class
+      .attr('class', (d) => {
+        const isVisited = visitedStations.includes(d[0]);
+        const hasPhotos = hasStationPhotos(d[0]);
+        return `station ${isVisited ? 'visited' : ''} ${hasPhotos ? 'has-photos' : ''}`;
+      })
       .attr('cx', ([, pos]) => xScale(pos[0]))
       .attr('cy', ([, pos]) => yScale(pos[1]))
       .attr('r', (d) => (visitedStations.includes(d[0]) ? 7 : 5)) // Larger radius for visited
-      .attr('fill', (d) => (visitedStations.includes(d[0]) ? 'yellow' : 'white')) // Different fill color for visited
+      .attr('fill', (d) => {
+        const isVisited = visitedStations.includes(d[0]);
+        if (isVisited) return 'yellow'; // Yellow for visited stations
+        return 'white'; // White for unvisited stations
+      })
       .attr('stroke', 'black')
       .attr('stroke-width', 2)
       .style('filter', (d) => (visitedStations.includes(d[0]) ? 'url(#glow)' : null)) // Apply glow filter for visited
       .style('transition', 'r 0.2s ease-in-out, fill 0.2s ease-in-out') // Add transition for animation
+      .style('cursor', (d) => {
+        const isVisited = visitedStations.includes(d[0]);
+        return isVisited ? 'pointer' : 'default';
+      })
       .on('mouseover', function(_, d) { // Use function() to access 'this'
         d3.select(this).transition().duration(200).attr('r', visitedStations.includes(d[0]) ? 10 : 7); // Further increase size on hover for visited
         setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]);
+      })
+      .on('click', (_, d) => {
+        handleStationClick(d[0]);
       })
       .each(([id, pos]) => {
         coordsMap[id] = { x: xScale(pos[0]), y: yScale(pos[1]) };
@@ -187,6 +214,18 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
             ))}
           </ul>
         </div>
+      )}
+
+      {/* Station Photo Modal */}
+      {selectedStation && (
+        <StationPhotoModal
+          isOpen={isPhotoModalOpen}
+          onClose={() => {
+            setIsPhotoModalOpen(false);
+            setSelectedStation(null);
+          }}
+          stationName={selectedStation}
+        />
       )}
     </div>
   );

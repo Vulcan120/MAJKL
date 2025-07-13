@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { orderByDistance } from 'geolib';
 import stationCoordinates from '@/lib/station-coordinates.json';
+import { saveStationPhoto } from '@/lib/utils';
 
 const VerificationSchema = z.object({
   stationName: z.string().min(1, 'Please select a station'),
@@ -360,6 +361,7 @@ export default function StationVerification({ onStationVerified, allStations }: 
         photoDataUri,
         stationName: data.stationName,
         username: data.username,
+        userLocation: userLocation || undefined,
       });
       
       setVerificationProgress(85);
@@ -371,6 +373,11 @@ export default function StationVerification({ onStationVerified, allStations }: 
       if (result.isAuthentic) {
         setVerificationStatus('✅ Station verified successfully!');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Show success state
+        
+        // Save verification photo to localStorage
+        if (photoDataUri) {
+          saveStationPhoto(data.stationName, photoDataUri, 'verification');
+        }
         
         toast({ 
           title: `🎉 Verified!`, 
@@ -444,6 +451,11 @@ export default function StationVerification({ onStationVerified, allStations }: 
       // Always succeed in dev mode
       setVerificationStatus('✅ Station verified successfully!');
       await new Promise(resolve => setTimeout(resolve, 1000)); // Show success state
+      
+      // Save verification photo to localStorage
+      if (photoDataUri) {
+        saveStationPhoto(data.stationName, photoDataUri, 'verification');
+      }
       
       toast({ 
         title: `🎉 Verified! (DEV MODE)`, 

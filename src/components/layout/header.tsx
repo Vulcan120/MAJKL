@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Rocket, Map, Image } from 'lucide-react';
+import { Rocket, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -39,19 +39,7 @@ export default function Header() {
                 Map
               </Button>
             </Link>
-            <Link href="/gallery">
-              <Button 
-                variant={pathname === '/gallery' ? 'default' : 'ghost'} 
-                size="sm"
-                className={cn(
-                  "flex items-center gap-2",
-                  pathname === '/gallery' && "bg-primary text-primary-foreground"
-                )}
-              >
-                <Image className="h-4 w-4" />
-                Gallery
-              </Button>
-            </Link>
+
           </nav>
         </div>
         
@@ -69,17 +57,7 @@ export default function Header() {
                 <Map className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/gallery">
-              <Button 
-                variant={pathname === '/gallery' ? 'default' : 'ghost'} 
-                size="sm"
-                className={cn(
-                  pathname === '/gallery' && "bg-primary text-primary-foreground"
-                )}
-              >
-                <Image className="h-4 w-4" />
-              </Button>
-            </Link>
+
           </nav>
           
           {isMounted ? (

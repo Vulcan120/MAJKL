@@ -1,310 +1,360 @@
-# PhantomFog
+# TubeHacks - London Underground Achievements
 
-**Version:** 1.1.0  
+**Version:** 2.0.0  
 **Team:** MAJKL  
 **Event:** BrunelHack 2025
 
-## Table of Contents
-1. [Introduction](#introduction)
-2. [Project Vision & Objectives](#project-vision--objectives)
-   - [Vision](#vision)
-   - [Core Objectives](#core-objectives)
-   - [Success Metrics](#success-metrics)
-3. [User Personas & Use Cases](#user-personas--use-cases)
-4. [System Overview & Architecture](#system-overview--architecture)
-5. [Frontend Design & Implementation](#frontend-design--implementation)
-   - [Tech Stack](#tech-stack)
-   - [Component Structure](#component-structure)
-   - [Key Logic](#key-logic)
-   - [Code Snippet: Fog Mask](#code-snippet-fog-mask)
-6. [Backend & API Layer](#backend--api-layer)
-   - [Endpoints](#endpoints)
-   - [Middleware](#middleware)
-7. [Blockchain Components](#blockchain-components)
-   - [Solana Anchor Program](#solana-anchor-program)
-   - [Internet Computer (ICP) Canister](#internet-computer-icp-canister)
-8. [AI-Based Verification Flow](#ai-based-verification-flow)
-9. [Data Models & Schemas](#data-models--schemas)
-10. [Security & Privacy Considerations](#security--privacy-considerations)
-11. [Performance & Scalability](#performance--scalability)
-12. [Deployment & DevOps](#deployment--devops)
-13. [Testing Strategy](#testing-strategy)
-14. [Monitoring & Analytics](#monitoring--analytics)
-15. [User Interface & Experience](#user-interface--experience)
-16. [Internationalization & Localization](#internationalization--localization)
-17. [Accessibility](#accessibility)
-18. [Error Handling & Logging](#error-handling--logging)
-19. [Developer Experience & Documentation](#developer-experience--documentation)
-20. [Future Roadmap](#future-roadmap)
-21. [Glossary](#glossary)
-22. [References & Resources](#references--resources)
+## 🚇 Overview
 
-<a id="introduction"></a>
-## Introduction
-PhantomFog is a next-generation, gamified location verification platform that overlays a dynamic fog-of-war on an SVG London Tube map. Developed by Team MAJKL for BrunelHack 2025, PhantomFog leverages blockchain (Solana) and decentralized compute/storage (ICP) alongside AI-driven photo verification for a secure, privacy-preserving, and engaging experience.
+TubeHacks is a gamified London Underground exploration platform that rewards users for visiting tube stations with blockchain-based achievements and tokens. Built with Next.js, ICP (Internet Computer Protocol), and Solana integration, it features real-time station verification, achievement milestones, and cross-chain token minting.
 
-Users physically visit Tube stations, capture an in-app selfie with a paper sign displaying their `@username`, and submit photos for AI validation. Upon successful verification, metadata is stored immutably on ICP canisters and a Solana transaction logs the station visit, minting an on-chain NFT badge. The global map fog clears in real-time, fostering collaborative exploration and friendly competition.
+## ✨ Key Features
 
-<a id="project-vision--objectives"></a>
-## Project Vision & Objectives
+### 🏆 Achievement System
+- **10 Milestone Achievements**: From "First Steps" (1 station) to "Tube Completionist" (270 stations)
+- **Rarity Levels**: Common, Uncommon, Rare, Epic, Legendary, Mythic
+- **Visual Badges**: Auto-generated SVG achievement images with rarity-based styling
+- **Progress Tracking**: Real-time progress bars and milestone notifications
 
-<a id="vision"></a>
-### Vision
-Revolutionize how people prove physical presence by seamlessly integrating decentralized verification with real-world exploration gamified for mass engagement.
+### 🔗 ICP Integration
+- **Achievements Canister**: Validates and stores achievement data on ICP
+- **Solana Bridge Canister**: Handles cross-chain token minting
+- **Decentralized Storage**: All achievement metadata stored on ICP
+- **Real-time Validation**: Achievements validated through ICP canisters
 
-<a id="core-objectives"></a>
-### Core Objectives
-- **Trustless Proof-of-Presence:** Multi-layered pipeline ensuring >99% authenticity accuracy.
-- **Data Sovereignty & Privacy:** Store only essential metadata; sensitive data remains encrypted.
-- **Scalable Global Infrastructure:** Architect for millions of daily users via Solana TPS and ICP auto-scaling.
-- **Developer-First SDK:** Provide TypeScript SDK, CLI scaffolding, and OpenAPI docs.
-- **Immersive Gamification:** Fog-of-war map, NFT badges, timed events, leaderboards, and team challenges.
-- **Cross-Chain Interoperability:** Support SPL tokens and ICP-certified NFTs.
-- **Sustainable Ecosystem:** Monetize through events, premium badges, analytics subscriptions, and DAO governance.
+### 💰 Solana Token System
+- **Station Tokens**: Mint tokens for each verified station visit
+- **Achievement Tokens**: Special tokens for milestone achievements
+- **Cross-chain Integration**: Solana tokens minted via ICP bridge
+- **Wallet Integration**: Phantom wallet support for token management
 
-<a id="success-metrics"></a>
-### Success Metrics
-- **50K MAU** within 6 months.
-- **1M+** check-ins per day.
-- **10+** partner integrations in the first year.
-- **40%** 30-day retention.
-- **20%** referral rate.
+### 🗺️ Interactive Tube Map
+- **D3.js Visualization**: Interactive London Underground map
+- **Station Markers**: Click to verify and earn tokens
+- **Geolocation**: Real-time user location tracking
+- **Responsive Design**: Works on desktop and mobile
 
-<a id="user-personas--use-cases"></a>
-## User Personas & Use Cases
-| Persona            | Goals                                            | Pain Points                              |
-|--------------------|--------------------------------------------------|------------------------------------------|
-| **Urban Explorer** | Discover hidden locales; earn digital badges     | Standard check-in apps lack authenticity |
-| **Event Organizer**| Host city-wide scavenger hunts                   | Complex logistics; trust issues          |
-| **Transit Authority**| Incentivize off-peak travel; collect usage metrics| Data privacy; user adoption            |
-| **Developer Partner**| Integrate location gamification into apps      | Lack of ready-to-use SDKs and APIs       |
+### 📱 Modern UI/UX
+- **Dark/Light Theme**: Automatic theme switching
+- **Achievement Notifications**: Popup notifications for new achievements
+- **ICP Status Indicator**: Real-time connection status
+- **Mobile Responsive**: Optimized for all screen sizes
 
-<a id="system-overview--architecture"></a>
-## System Overview & Architecture
-```mermaid
-flowchart LR
-  subgraph UI
-    U[User] --> F[React Frontend]
-  end
-  F -->|Wallet Connect| W[Phantom Wallet]
-  F -->|Photo| A[AI Service]
-  A -->|Verified| F
-  F -->|LogMeta| I[ICP Canister]
-  F -->|Create TX| S[Solana Anchor]
-  S -->|Confirm| F
-  I -->|Fetch| F
-  F -->|Update| M[Fog-of-War Map]
+## 🏗️ Architecture
+
+### Frontend Stack
+- **Next.js 15**: React framework with App Router
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **Radix UI**: Accessible component library
+- **D3.js**: Interactive data visualization
+
+### Backend & Blockchain
+- **ICP Canisters**: Rust-based smart contracts
+- **Solana**: Token minting and transactions
+- **AI Verification**: Station photo validation
+- **Local Storage**: Achievement persistence
+
+### Data Flow
+```
+User Visit → Photo Capture → AI Verification → ICP Validation → Solana Minting → Achievement Unlock
 ```
 
-<a id="frontend-design--implementation"></a>
-## Frontend Design & Implementation
+## 🚀 Getting Started
 
-<a id="tech-stack"></a>
-### Tech Stack
-- React.js (v18), TypeScript, Tailwind CSS, Radix UI, d3-tube-map.
+### Prerequisites
+- Node.js 18+
+- Rust (for ICP canisters)
+- DFX (Internet Computer SDK)
+- Phantom Wallet
 
-<a id="component-structure"></a>
-### Component Structure
-```
-App
-├── Header.tsx
-├── TubeMap.tsx
-├── StationVerification.tsx
-│   ├── SelfieCapture.tsx
-│   └── UsernameInput.tsx
-├── UserProfile.tsx
-├── WalletProvider.tsx
-├── ThemeProvider.tsx
-└── Toaster.tsx
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd MAJKL-1
 ```
 
-<a id="key-logic"></a>
-### Key Logic
-- **State Management:** React Context + React Query for async data.
-- **Fog Mask Update:** Recompute SVG mask when `visitedStations` changes.
-- **Responsive Handling:** `useIsMobile` hook adjusts breakpoints.
-
-<a id="code-snippet-fog-mask"></a>
-### Code Snippet: Fog Mask
-```jsx
-<mask id="fog">
-  <rect width="100%" height="100%" fill="black" />
-  {visitedStations.map(id => (
-    <circle key={id} cx={stations[id].x} cy={stations[id].y} r={maskRadius} fill="white" />
-  ))}
-</mask>
-<g mask="url(#fog)">{/* map content */}</g>
+2. **Install dependencies**
+```bash
+npm install
 ```
 
-<a id="backend--api-layer"></a>
-## Backend & API Layer
+3. **Start ICP replica**
+```bash
+source "$HOME/Library/Application Support/org.dfinity.dfx/env"
+dfx start --clean --background
+```
 
-<a id="endpoints"></a>
-### Endpoints
-| Endpoint             | Method | Description                          |
-|----------------------|--------|--------------------------------------|
-| `/api/verify-photo`  | POST   | AI-based photo authenticity check    |
-| `/api/log-photo`     | POST   | Store `PhotoMeta` in ICP canister    |
-| `/api/clear-station` | POST   | Build and return Solana tx instruction |
-| `/api/get-logs`      | GET    | Fetch `PhotoMeta` list from ICP      |
+4. **Deploy ICP canisters**
+```bash
+dfx deploy
+```
 
-<a id="middleware"></a>
-### Middleware
-- **CORS:** Restrictive origin policy.
-- **Rate Limiter:** 60 req/min (`express-rate-limit`).
-- **Body Parser:** JSON with size limits.
-- **Error Handler:** Centralized `{ code, message }` format.
+5. **Start development server**
+```bash
+npm run dev
+```
 
-<a id="blockchain-components"></a>
-## Blockchain Components
+6. **Open the application**
+```
+http://localhost:9002
+```
 
-<a id="solana-anchor-program"></a>
-### Solana Anchor Program
+## 🎯 How It Works
+
+### Station Verification Process
+1. **Visit a Station**: Navigate to any London Underground station
+2. **Take a Photo**: Capture a photo with the station in view
+3. **AI Verification**: Our AI validates the photo authenticity
+4. **ICP Validation**: Achievement data is validated on ICP canisters
+5. **Token Minting**: Solana tokens are minted via ICP bridge
+6. **Achievement Check**: System checks for milestone achievements
+
+### Achievement Milestones
+| Visits | Achievement | Rarity | Description |
+|--------|-------------|--------|-------------|
+| 1 | First Steps | Common | Visit your first tube station |
+| 10 | Getting Around | Uncommon | Visit 10 tube stations |
+| 25 | Tube Explorer | Uncommon | Visit 25 tube stations |
+| 50 | London Navigator | Rare | Visit 50 tube stations |
+| 75 | Underground Veteran | Rare | Visit 75 tube stations |
+| 100 | Metro Master | Epic | Visit 100 tube stations |
+| 150 | Tube Network Expert | Epic | Visit 150 tube stations |
+| 200 | London Underground Legend | Legendary | Visit 200 tube stations |
+| 250 | Almost There | Legendary | Visit 250 tube stations |
+| 270 | Tube Completionist | Mythic | Visit all 270 tube stations |
+
+### ICP Integration Features
+- **Achievements Canister**: Stores and validates achievement data
+- **Solana Bridge Canister**: Handles cross-chain token minting
+- **Real-time Validation**: All achievements validated through ICP
+- **Decentralized Storage**: No central database required
+- **Canister UI**: Direct access to canister interfaces
+
+## 🛠️ Development
+
+### Project Structure
+```
+MAJKL-1/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   ├── components/             # React components
+│   │   ├── ui/                # Reusable UI components
+│   │   ├── sidebar/           # Sidebar components
+│   │   ├── map/               # Map-related components
+│   │   └── providers/         # Context providers
+│   ├── lib/                   # Utility functions
+│   ├── hooks/                 # Custom React hooks
+│   ├── types/                 # TypeScript type definitions
+│   └── backend/               # ICP canisters
+│       ├── achievements/      # Achievements canister
+│       └── solana_bridge/     # Solana bridge canister
+├── dfx.json                   # ICP project configuration
+├── Cargo.toml                 # Rust workspace
+└── deploy-icp.sh             # Deployment script
+```
+
+### Key Components
+
+#### ICP Status Indicator
+- Real-time connection status to ICP canisters
+- Floating indicator in top-right corner
+- Links to canister UI interfaces
+
+#### Achievement System
+- Automatic milestone detection
+- Visual achievement badges
+- Progress tracking
+- Notification system
+
+#### Station Verification
+- Photo capture and validation
+- AI-based authenticity checking
+- Token minting on verification
+- Achievement triggering
+
+### ICP Canisters
+
+#### Achievements Canister (`src/backend/achievements/`)
 ```rust
-#[program]
-pub mod phantomfog {
-  pub fn clear_station(ctx: Context<ClearStation>, station_id: u16) -> Result<()> {
-    let log = &mut ctx.accounts.station_log;
-    log.user = *ctx.accounts.user.key;
-    log.station_id = station_id;
-    log.timestamp = Clock::get()?.unix_timestamp;
-    Ok(())
-  }
-}
-
-#[derive(Accounts)]
-pub struct ClearStation<'info> {
-  #[account(init_if_needed, payer = user, space = 50)]
-  pub station_log: Account<'info, StationLog>,
-  #[account(mut)] pub user: Signer<'info>,
-  pub system_program: Program<'info, System>,
-}
-
-#[account]
-pub struct StationLog {
-  pub user: Pubkey,
-  pub station_id: u16,
-  pub timestamp: i64
+// Validates and stores achievement data
+pub struct AchievementData {
+    pub user_id: String,
+    pub achievement_id: String,
+    pub achievement_name: String,
+    pub required_visits: u32,
+    pub current_visits: u32,
+    pub timestamp: String,
+    pub wallet_address: String,
 }
 ```
 
-<a id="internet-computer-icp-canister"></a>
-### Internet Computer (ICP) Canister
-```motoko
-actor majkl_canister {
-  public type PhotoMeta = {
-    stationId: Nat;
-    url: Text;
-    timestamp: Nat;
-  };
-  var logs: [PhotoMeta] = [];
-  public func addLog(meta: PhotoMeta): async Bool {
-    logs := Array.append(logs, [meta]);
-    true
-  }
-  public query func getLogs(): async [PhotoMeta] {
-    logs
-  }
+#### Solana Bridge Canister (`src/backend/solana_bridge/`)
+```rust
+// Handles cross-chain token minting
+pub struct AchievementMintingRequest {
+    pub achievement_id: String,
+    pub user_wallet: String,
+    pub metadata_uri: String,
 }
 ```
 
-<a id="ai-based-verification-flow"></a>
-## AI-Based Verification Flow
-- **Capture & Encode:** Convert user photo to Base64.
-- **GenKit Prompt:** Contextual instructions + photo URI.
-- **Gemini Model:** Validates face, OCR on username, and scene.
-- **Threshold Logic:** Accept if `confidence >= 0.8`; else reject.
-- **Result Handling:** Return `{ isAuthentic, score, errors[] }`.
+## 🔧 Configuration
 
-<a id="data-models--schemas"></a>
-## Data Models & Schemas
-```ts
-const PhotoMeta = z.object({  
-  stationId: z.number(),
-  url: z.string().url(),
-  timestamp: z.number(),
-});
-type PhotoMeta = z.infer<typeof PhotoMeta>;
+### Environment Variables
+```bash
+# ICP Configuration
+DFX_NETWORK=local
+CANISTER_ID_ACHIEVEMENTS=uxrrr-q7777-77774-qaaaq-cai
+CANISTER_ID_SOLANA_BRIDGE=u6s2n-gx777-77774-qaaba-cai
+
+# Solana Configuration
+SOLANA_RPC_URL=https://api.devnet.solana.com
+SOLANA_NETWORK=devnet
 ```
 
-<a id="security--privacy-considerations"></a>
-## Security & Privacy Considerations
-- TLS 1.3 for all APIs.
-- Phantom Wallet handles private keys.
-- No PII stored on-chain.
-- Verification in serverless, ephemeral AI environment.
+### ICP Deployment
+```bash
+# Deploy to local network
+dfx deploy
 
-<a id="performance--scalability"></a>
-## Performance & Scalability
-- Solana TPS: >50k tx/sec.
-- ICP Auto-Scaling: Dynamic cycles.
-- Frontend: Code-splitting, lazy-loading.
+# Deploy to mainnet
+dfx deploy --network ic
+```
 
-<a id="deployment--devops"></a>
-## Deployment & DevOps
-- CI/CD: GitHub Actions -> Vercel & DFX.
-- Secrets: GitHub Secrets (`DFX_ID`, `SOL_KEY`).
-- Monitoring: Sentry, Prometheus, Grafana.
+## 🎨 UI Features
 
-<a id="testing-strategy"></a>
-## Testing Strategy
-- Unit: Jest (React), Mocha (Node).
-- Integration: Anchor tests, DFX canister tests.
-- E2E: Cypress simulating check-ins.
+### Achievement Display
+- **Progress Cards**: Show progress to next achievement
+- **Achievement List**: All unlocked achievements with details
+- **Rarity Badges**: Color-coded rarity indicators
+- **ICP Verification**: Shows ICP validation status
 
-<a id="monitoring--analytics"></a>
-## Monitoring & Analytics
-- **Metrics:** API latency, tx times, AI success rates.
-- **Dashboards:** Grafana with Prometheus exporter.
-- **User Events:** Segment for check-ins.
+### Interactive Map
+- **Station Markers**: Clickable station points
+- **Geolocation**: Real-time user location
+- **Fog of War**: Reveals visited stations
+- **Responsive Design**: Works on all devices
 
-<a id="user-interface--experience"></a>
-## User Interface & Experience
-- WCAG 2.1 AA compliance.
-- Mobile-first responsive design.
-- Feedback via `useToast` toasts.
+### Sidebar Components
+- **User Profile**: Shows collected badges and stats
+- **Station Verification**: Photo capture and validation
+- **ICP Status**: Connection status and canister info
+- **Achievement Progress**: Real-time progress tracking
 
-<a id="internationalization--localization"></a>
-## Internationalization & Localization
-- `react-i18next` with locale JSON files.
-- Dynamic support for multiple city maps.
+## 🔒 Security & Privacy
 
-<a id="accessibility"></a>
-## Accessibility
-- ARIA roles on interactive elements.
-- Full keyboard navigation and focus management.
+### Data Protection
+- **No PII Storage**: Only achievement metadata stored
+- **Local Storage**: User data stays on device
+- **ICP Encryption**: Canister data is encrypted
+- **Wallet Security**: Phantom wallet handles keys
 
-<a id="error-handling--logging"></a>
-## Error Handling & Logging
-- React Error Boundary component.
-- Standardized JSON error responses.
+### Verification Process
+- **AI Validation**: Photo authenticity checking
+- **ICP Validation**: Achievement verification on canisters
+- **Multi-layer Security**: Multiple validation steps
+- **Audit Trail**: All actions logged on blockchain
 
-<a id="developer-experience--documentation"></a>
-## Developer Experience & Documentation
-- TypeScript SDK & CLI for rapid setup.
-- Auto-generated IDL docs from Anchor & Motoko.
-- EditorConfig: ESLint, Prettier, Tailwind Lint.
+## 🚀 Deployment
 
-<a id="future-roadmap"></a>
-## Future Roadmap
-- Global expansion: NYC, Tokyo.
-- GPS-based geofencing check-ins.
-- AR overlays with station info.
-- DAO governance for community events.
+### Local Development
+```bash
+# Start all services
+npm run dev          # Next.js frontend
+dfx start --clean    # ICP replica
+dfx deploy           # Deploy canisters
+```
 
-<a id="glossary"></a>
-## Glossary
-- **Badge:** On-chain NFT/SBT for station visits.
-- **Canister:** ICP compute + storage unit.
-- **Fog-of-War:** SVG mask motif for the map.
-- **PhotoMeta:** `{ stationId, url, timestamp }`.
+### Production Deployment
+```bash
+# Deploy to mainnet
+./deploy-icp.sh
 
-<a id="references--resources"></a>
-## References & Resources
-- [Solana Docs](https://docs.solana.com/)
-- [Anchor Framework](https://project-serum.github.io/anchor/)
-- [DFINITY SDK](https://sdk.dfinity.org/)
-- [GenKit & Gemini](https://cloud.google.com/vertex-ai)
-- [d3-tube-map](https://github.com/derhuerst/d3-tube-map)
-- [Radix UI](https://www.radix-ui.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
+# Build and deploy frontend
+npm run build
+npm run start
+```
+
+## 📊 Performance
+
+### Optimization Features
+- **Code Splitting**: Lazy-loaded components
+- **Image Optimization**: Auto-generated SVG achievements
+- **Caching**: Local storage for achievements
+- **Real-time Updates**: WebSocket-like updates
+
+### Scalability
+- **ICP Auto-scaling**: Canisters scale automatically
+- **Solana TPS**: High transaction throughput
+- **CDN Ready**: Static assets optimized
+- **Mobile Optimized**: Responsive design
+
+## 🤝 Contributing
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+### Code Standards
+- **TypeScript**: Strict type checking
+- **ESLint**: Code quality enforcement
+- **Prettier**: Code formatting
+- **Husky**: Pre-commit hooks
+
+## 📈 Roadmap
+
+### Phase 1 (Current)
+- ✅ Basic achievement system
+- ✅ ICP integration
+- ✅ Solana token minting
+- ✅ Interactive tube map
+- ✅ Achievement notifications
+
+### Phase 2 (Planned)
+- 🔄 Multi-city support
+- 🔄 Social features
+- 🔄 Leaderboards
+- 🔄 Team challenges
+- 🔄 Premium features
+
+### Phase 3 (Future)
+- 🔮 AR integration
+- 🔮 Voice commands
+- 🔮 AI-powered recommendations
+- 🔮 Cross-chain NFTs
+- 🔮 DAO governance
+
+## 📞 Support
+
+### Getting Help
+- **Documentation**: Check the code comments
+- **Issues**: Report bugs on GitHub
+- **Discussions**: Join our community
+- **Email**: Contact the team
+
+### Resources
+- [ICP Documentation](https://internetcomputer.org/docs)
+- [Solana Documentation](https://docs.solana.com)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **BrunelHack 2025**: For the hackathon opportunity
+- **ICP Foundation**: For the Internet Computer platform
+- **Solana Labs**: For the blockchain infrastructure
+- **London Underground**: For the station data and inspiration
+
+---
+
+**Built with ❤️ by Team MAJKL for BrunelHack 2025**

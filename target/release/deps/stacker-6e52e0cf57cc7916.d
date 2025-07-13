@@ -1,0 +1,10 @@
+/Users/stoianalberto/MAJKL-1/target/release/deps/libstacker-6e52e0cf57cc7916.rmeta: /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/lib.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/mod.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/macos.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/mmap_stack_restore_guard.rs
+
+/Users/stoianalberto/MAJKL-1/target/release/deps/libstacker-6e52e0cf57cc7916.rlib: /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/lib.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/mod.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/macos.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/mmap_stack_restore_guard.rs
+
+/Users/stoianalberto/MAJKL-1/target/release/deps/stacker-6e52e0cf57cc7916.d: /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/lib.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/mod.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/macos.rs /Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/mmap_stack_restore_guard.rs
+
+/Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/lib.rs:
+/Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/mod.rs:
+/Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/backends/macos.rs:
+/Users/stoianalberto/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stacker-0.1.21/src/mmap_stack_restore_guard.rs:

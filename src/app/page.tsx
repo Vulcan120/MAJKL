@@ -15,6 +15,8 @@ import {
 import UserProfile from '@/components/sidebar/user-profile';
 import StationVerification from '@/components/sidebar/station-verification';
 import TubeLineKey, { LineData } from '@/components/sidebar/tube-line-key';
+import { ICPStatus } from '@/components/sidebar/icp-status';
+import { ICPIndicator } from '@/components/ui/icp-indicator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Rocket, LocateIcon, AlertCircle, Train } from 'lucide-react';
 
@@ -366,21 +368,20 @@ export default function Home() {
   const sidebarContent = (
     <>
       <UserProfile collectedBadges={visitedStations} />
-      <StationVerification
-        onStationVerified={handleStationVerified}
-        allStations={ALL_STATIONS}
-      />
+      <StationVerification onStationVerified={handleStationVerified} allStations={ALL_STATIONS} />
+      <ICPStatus />
     </>
   );
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen flex-col bg-background font-body text-foreground">
-        <Header />
-        <main className="grid flex-1 grid-cols-1 md:grid-cols-[24rem_1fr_16rem] overflow-hidden">
-          <aside className="hidden md:flex h-full flex-col gap-8 overflow-y-auto border-r bg-card p-6">
-            {sidebarContent}
-          </aside>
+    <div className="flex h-screen flex-col bg-background font-body text-foreground">
+      <ICPIndicator />
+      <Header />
+      <main className="grid flex-1 grid-cols-1 md:grid-cols-[24rem_1fr_16rem] overflow-hidden">
+        <aside className="hidden md:flex h-full flex-col gap-8 overflow-y-auto border-r bg-card p-6">
+          {sidebarContent}
+        </aside>
 
           <div className="relative flex flex-1 flex-col overflow-hidden">
             <div className="flex items-center gap-4 border-b p-4 md:pr-0">

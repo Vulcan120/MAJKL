@@ -17,6 +17,7 @@ import { orderByDistance } from 'geolib';
 import stationCoordinates from '@/lib/station-coordinates.json';
 import { saveStationPhoto, saveStationVisit } from '@/lib/utils';
 import { mintStationToken, type StationToken } from '@/lib/token-system';
+import { checkAndMintAchievements } from '@/lib/achievements-system';
 import TokenMintCelebration from './token-mint-celebration';
 
 const VerificationSchema = z.object({
@@ -459,7 +460,21 @@ export default function StationVerification({
           console.error("Token minting failed:", error);
           // Don't fail the entire verification for token minting issues
         }
-
+        
+        // Check for achievements
+        let unlockedAchievements: any[] = [];
+        try {
+          setVerificationStatus('🏆 Checking achievements...');
+          unlockedAchievements = await checkAndMintAchievements();
+          if (unlockedAchievements.length > 0) {
+            setVerificationStatus(`🎉 Unlocked ${unlockedAchievements.length} achievement(s)!`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error('Achievement check failed:', error);
+          // Don't fail the entire verification for achievement issues
+        }
+        
         onStationVerified(data.stationName);
         form.reset();
         setPhotoDataUri(null);
@@ -473,6 +488,20 @@ export default function StationVerification({
             title: `🎉 Verified!`,
             description: `${data.stationName} station confirmed!`,
             className: "bg-green-500 text-white",
+          });
+        }
+        
+        // Show achievement notification if any were unlocked
+        if (unlockedAchievements.length > 0) {
+          // Trigger a custom event to notify the achievements component
+          window.dispatchEvent(new CustomEvent('achievement-unlocked', {
+            detail: { achievements: unlockedAchievements }
+          }));
+          
+          toast({
+            title: `🏆 Achievement Unlocked!`,
+            description: `You've unlocked ${unlockedAchievements.length} new achievement(s)!`,
+            className: 'bg-yellow-500 text-white'
           });
         }
       } else {
@@ -574,7 +603,21 @@ export default function StationVerification({
         console.error("Token minting failed:", error);
         // Don't fail the entire verification for token minting issues
       }
-
+      
+      // Check for achievements
+      let unlockedAchievements: any[] = [];
+      try {
+        setVerificationStatus('🏆 Checking achievements...');
+        unlockedAchievements = await checkAndMintAchievements();
+        if (unlockedAchievements.length > 0) {
+          setVerificationStatus(`🎉 Unlocked ${unlockedAchievements.length} achievement(s)!`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.error('Achievement check failed:', error);
+        // Don't fail the entire verification for achievement issues
+      }
+        
       onStationVerified(data.stationName);
       form.reset();
       setPhotoDataUri(null);
@@ -590,6 +633,20 @@ export default function StationVerification({
           className: "bg-green-500 text-white",
         });
       }
+      
+              // Show achievement notification if any were unlocked
+        if (unlockedAchievements.length > 0) {
+          // Trigger a custom event to notify the achievements component
+          window.dispatchEvent(new CustomEvent('achievement-unlocked', {
+            detail: { achievements: unlockedAchievements }
+          }));
+          
+          toast({
+            title: `🏆 Achievement Unlocked!`,
+            description: `You've unlocked ${unlockedAchievements.length} new achievement(s)!`,
+            className: 'bg-yellow-500 text-white'
+          });
+        }
     } catch (error) {
       setVerificationProgress(0);
       setVerificationStatus("💥 Verification error occurred");

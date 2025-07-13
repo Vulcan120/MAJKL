@@ -1,0 +1,1 @@
+&mut StableBTreeMap<std::vec::Vec<u8>, StoredAchievement, Ic0StableMemory>

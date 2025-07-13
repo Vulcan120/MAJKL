@@ -113,19 +113,34 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     [visitedStations, stationCoords]
   );
 
+  // Filter out undefined values in case a station ID is not found in stationCoords - this is incorrect
+  const validFogHoles = fogHoles.filter(hole => hole !== undefined);
+
+  
+
   return (
     <div className="w-full h-full relative">
       <div ref={containerRef} className="w-full h-full" />
       <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
-        <defs>
+       <defs>
           <mask id="fog-mask">
-            <rect width="100%" height="100%" fill="white" />
-            {fogHoles.map((c, i) => (
-              <circle key={i} cx={c.x} cy={c.y} r="40" fill="black" />
-            ))}
+            {/* Iterate through all station coordinates to create fog holes */}
+            {validFogHoles.map((c, i) => {const isVisited = visitedStations.includes(
+    Object.keys(stationCoords).find((key) => stationCoords[key] === c) || ''
+  );
+  return (
+              <circle key={i} cx={c.x} cy={c.y} r={isVisited ? "55" : "50"} fill="white" filter={isVisited ? "url(#glow)" : undefined} />
+            )})}
           </mask>
+           <filter id="glow">
+            {/* This filter creates the white glow effect */}
+            <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
-        <rect width="100%" height="100%" fill={fogColor} mask="url(#fog-mask)" />
       </svg>
     </div>
   );

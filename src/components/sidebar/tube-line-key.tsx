@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface LineData {
+export interface LineData {
   name: string;
   color: string;
   count: number;

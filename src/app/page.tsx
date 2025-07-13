@@ -6,7 +6,7 @@ import londonData from '@/lib/london.json';
 import TubeMap from '@/components/map/tube-map';
 import UserProfile from '@/components/sidebar/user-profile';
 import StationVerification from '@/components/sidebar/station-verification';
-import TubeLineKey from '@/components/sidebar/tube-line-key.tsx';
+import TubeLineKey, { LineData } from '@/components/sidebar/tube-line-key';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Rocket } from 'lucide-react';
 
@@ -22,7 +22,7 @@ export default function Home() {
     }
   };
 
-  const lineStationCounts = useMemo(() => {
+  const lineStationCounts: LineData[] = useMemo(() => {
     return londonData.lines.map((line: any) => ({
       // Format the line name: replace hyphens with spaces and capitalize each word
       formattedName: line.name
@@ -30,6 +30,7 @@ export default function Home() {
         .split(' ')
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' '),
+      name: line.name, // Include the original name property
       color: line.color,
       count: line.nodes.length,
     }));

@@ -209,7 +209,7 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
   const validFogHoles = fogHoles.filter((hole) => hole !== undefined);
 
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full h-full relative cursor-grab">
       <div ref={containerRef} className="w-full h-full" />
       <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-10">
         <defs>

@@ -1,8 +1,8 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Train } from 'lucide-react';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { TrainFrontTunnel } from "lucide-react";
 
 export interface LineData {
   name: string;
@@ -17,13 +17,15 @@ interface TubeLineKeyProps {
 
 const TubeLineKey: React.FC<TubeLineKeyProps> = ({ lineData }) => {
   // Sort lines by name for consistent display
-  const sortedLines = [...lineData].sort((a, b) => a.formattedName.localeCompare(b.formattedName));
+  const sortedLines = [...lineData].sort((a, b) =>
+    a.formattedName.localeCompare(b.formattedName)
+  );
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
-          <Train className="w-5 h-5 text-primary" />
+          <TrainFrontTunnel className="w-5 h-5 text-primary" />
           Tube Lines
         </CardTitle>
       </CardHeader>
@@ -31,8 +33,8 @@ const TubeLineKey: React.FC<TubeLineKeyProps> = ({ lineData }) => {
         <ScrollArea className="h-[calc(100vh-200px)] px-6">
           <div className="space-y-3 pb-4">
             {sortedLines.map((line) => (
-              <div 
-                key={line.name} 
+              <div
+                key={line.name}
                 className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:bg-muted/50"
               >
                 {/* Line color indicator */}
@@ -46,18 +48,20 @@ const TubeLineKey: React.FC<TubeLineKeyProps> = ({ lineData }) => {
                     style={{ backgroundColor: line.color }}
                   />
                 </div>
-                
+
                 {/* Line info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm truncate">{line.formattedName}</h4>
-                    <Badge 
-                      variant="secondary" 
+                    <h4 className="font-semibold text-sm truncate">
+                      {line.formattedName}
+                    </h4>
+                    <Badge
+                      variant="secondary"
                       className="text-xs ml-2 flex-shrink-0"
-                      style={{ 
+                      style={{
                         backgroundColor: `${line.color}20`,
                         borderColor: `${line.color}40`,
-                        color: line.color
+                        color: line.color,
                       }}
                     >
                       {line.count}

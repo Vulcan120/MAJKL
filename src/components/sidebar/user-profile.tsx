@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +25,6 @@ import { useToast } from "@/hooks/use-toast";
 import { getVisitLog, type VisitLogEntry } from "@/lib/utils";
 import StationTokens from "./station-tokens";
 import {
-  Ticket,
   MapPin,
   Clock,
   User,
@@ -38,7 +36,7 @@ import {
   Loader2,
   Palette, // Add this
   Check, // Add this
-  Train, // Add this
+  TrainFrontTunnel, // Add this
 } from "lucide-react";
 import { useTubeTheme } from "@/contexts/tube-theme-context";
 import Achievements from "./achievements";
@@ -301,7 +299,8 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
         </CardHeader>
         <CardContent className="p-0 mt-6">
           <h3 className="font-semibold mb-3 flex items-center gap-2 text-md">
-            <Train className="w-5 h-5 text-primary" /> Exploration Progress
+            <TrainFrontTunnel className="w-5 h-5 text-primary" /> Exploration
+            Progress
           </h3>
 
           <div className="bg-muted/50 rounded-lg p-4">
@@ -323,7 +322,7 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
                   )}%`,
                 }}
               >
-                <Train className="w-4 h-4 text-primary z-10" />
+                <TrainFrontTunnel className="w-4 h-4 text-primary z-10" />
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">

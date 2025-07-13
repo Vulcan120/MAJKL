@@ -63,26 +63,6 @@ export default function Achievements() {
     return () => clearInterval(interval);
   }, []);
   
-  // Check for new achievements and show notifications
-  useEffect(() => {
-    const currentAchievements = getAllUserAchievements();
-    const newAchievements = currentAchievements.filter(
-      achievement => !achievements.some(existing => existing.id === achievement.id)
-    );
-    
-    if (newAchievements.length > 0) {
-      // Show notification for the most recent achievement
-      const latestAchievement = newAchievements[newAchievements.length - 1];
-              if (!shownAchievements.has(latestAchievement.id)) {
-          setNotificationAchievement(latestAchievement);
-          const newShownAchievements = new Set([...shownAchievements, latestAchievement.id]);
-          setShownAchievements(newShownAchievements);
-          // Save to localStorage
-          localStorage.setItem('shownAchievements', JSON.stringify([...newShownAchievements]));
-        }
-    }
-  }, [achievements, shownAchievements]);
-  
   // Listen for achievement-unlocked event
   useEffect(() => {
     const handler = (e: any) => {

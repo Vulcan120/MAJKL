@@ -3,47 +3,26 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { useTheme } from 'next-themes';
-import { tubeMap } from 'd3-tube-map';
-import londonRaw from '@/lib/london.json';
-
-// ─── Types for the raw JSON ──────────────────────────────────────────────────
-interface RawStation {
-  name: string;
-  lines: string[];
-  position: number[];           // relaxed to number[]
-}
-
-interface RawLineNode {
-  id: string;
-  label?: string;
-  marker?: boolean;
-}
-
-interface RawLine {
-  name: string;
-  label: string;
-  color: string;
-  shift?: [number, number];
-  shiftCoords?: [number, number];
-  nodes: (string | RawLineNode)[];
-}
-
-interface RawData {
-  stations: Record<string, RawStation>;
-  lines: RawLine[];
-  river?: unknown;
-}
-
-// Cast the imported JSON to our typed interface
-const london = londonRaw as RawData;
+import londonData from '@/lib/london.json';
 
 interface TubeMapProps {
   visitedStations: string[];
 }
 
+// --- Casted types for easy indexing ---
+type StationRaw = { name: string; lines: string[]; position: number[] };
+type LineRaw = {
+  name: string;
+  label: string;
+  color: string;
+  nodes: (string | { id: string; label?: string; marker?: boolean })[];
+};
+
+const stations = londonData.stations as Record<string, StationRaw>;
+const lines = londonData.lines as LineRaw[];
+
 const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstance = useRef<any>(null);
   const [stationCoords, setStationCoords] = useState<Record<string, { x: number; y: number }>>({});
   const { resolvedTheme } = useTheme();
 
@@ -55,102 +34,83 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
     [resolvedTheme]
   );
 
-  // 1️⃣ transform raw data into d3-tube-map format
-  const formattedData = useMemo(() => {
-    // keep a reference to the raw stations for lookups
-    const rawStations = london.stations;
-
-    // stations: id → { label }
-    const stations = Object.fromEntries(
-      Object.entries(rawStations).map(([id, st]) => [
-        id,
-        { label: st.name },
-      ])
-    );
-
-    // lines: map nodes → coords + name + optional extras
-    const lines = london.lines.map(ln => {
-      const nodes = ln.nodes
-        .map(node => {
-          const id = typeof node === 'string' ? node : node.id;
-          const st = rawStations[id];
-          if (!st) {
-            // skip any unknown station IDs
-            console.warn(`Skipping unknown station ID: ${id}`);
-            return null;
-          }
-          const formattedNode: any = { coords: st.position, name: id };
-          if (typeof node !== 'string' && node.label) {
-            formattedNode.labelPos = node.label;
-          }
-          if (typeof node !== 'string' && node.marker) {
-            formattedNode.marker = node.marker;
-          }
-          return formattedNode;
-        })
-        .filter((n): n is { coords: number[]; name: string; labelPos?: string; marker?: boolean } => Boolean(n));
-
-      return {
-        name: ln.name,
-        label: ln.label,
-        color: ln.color,
-        shiftCoords: ln.shift ?? ln.shiftCoords,
-        nodes,
-      };
-    });
-
-    return {
-      stations,
-      lines,
-      river: london.river,
-    };
-  }, []);
-
   useEffect(() => {
     if (!containerRef.current) return;
+    // clear any prior SVG
+    d3.select(containerRef.current).selectAll('*').remove();
 
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
-    const map = tubeMap().width(width).height(height);
-    mapInstance.current = map;
 
-    d3.select(containerRef.current).datum(formattedData).call(map);
+    const svg = d3
+      .select(containerRef.current)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
 
-    const renderMap = () => {
-      if (!containerRef.current) return;
-      map
-        .width(containerRef.current.clientWidth)
-        .height(containerRef.current.clientHeight);
-      map.draw();
+    // scales to map raw coords → screen coords
+    const allX = Object.values(stations).map(s => s.position[0]);
+    const allY = Object.values(stations).map(s => s.position[1]);
+    const xScale = d3
+      .scaleLinear()
+      .domain([d3.min(allX)!, d3.max(allX)!])
+      .range([20, width - 20]);
+    const yScale = d3
+      .scaleLinear()
+      .domain([d3.min(allY)!, d3.max(allY)!])
+      .range([20, height - 20]);
 
-      const coords: Record<string, { x: number; y: number }> = {};
-      d3.select(containerRef.current)
-        .selectAll('.station')
-        .each(function (d: any) {
-          if (d.id) {
-            const transform = d3.select(this).attr('transform') || '';
-            const [x, y] = transform
-              .slice(transform.indexOf('(') + 1, transform.indexOf(')'))
-              .split(',')
-              .map(parseFloat);
-            coords[d.id] = { x, y };
+    const lineGen = d3
+      .line<[number, number]>()
+      .x(d => xScale(d[0]))
+      .y(d => yScale(d[1]))
+      .curve(d3.curveLinear);
+
+    // draw each line, skipping any unknown station IDs
+    lines.forEach(ln => {
+      const pts: [number, number][] = ln.nodes
+        .map(node => {
+          const id = typeof node === 'string' ? node : node.id;
+          const st = stations[id];
+          if (!st) {
+            console.warn(`Skipping unknown station ID: ${id}`);
+            return null;
           }
-        });
-      setStationCoords(coords);
-    };
+          return [st.position[0], st.position[1]] as [number, number];
+        })
+        .filter((p): p is [number, number] => Boolean(p));
 
-    renderMap();
-    const resizeObserver = new ResizeObserver(renderMap);
-    resizeObserver.observe(containerRef.current);
+      svg
+        .append('path')
+        .datum(pts)
+        .attr('d', lineGen)
+        .attr('stroke', ln.color)
+        .attr('stroke-width', 4)
+        .attr('fill', 'none');
+    });
 
-    return () => {
-      resizeObserver.disconnect();
-      if (containerRef.current) {
-        d3.select(containerRef.current).selectAll('*').remove();
-      }
-    };
-  }, [formattedData]);
+    // draw stations and record their pixel coords
+    const coordsMap: Record<string, { x: number; y: number }> = {};
+    svg
+      .selectAll('circle.station')
+      .data(Object.entries(stations))
+      .enter()
+      .append('circle')
+      .attr('class', 'station')
+      .attr('cx', ([, s]) => xScale(s.position[0]))
+      .attr('cy', ([, s]) => yScale(s.position[1]))
+      .attr('r', 6)
+      .attr('fill', 'white')
+      .attr('stroke', 'black')
+      .attr('stroke-width', 2)
+      .each(function ([id, s]) {
+        coordsMap[id] = { x: xScale(s.position[0]), y: yScale(s.position[1]) };
+      });
 
+    setStationCoords(coordsMap);
+  }, [resolvedTheme]);
+
+  // build fog-mask holes
   const fogHoles = useMemo(
     () => visitedStations.map(id => stationCoords[id]).filter(Boolean),
     [visitedStations, stationCoords]
@@ -163,11 +123,11 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
         <defs>
           <mask id="fog-mask">
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {fogHoles.map((coords, i) => (
+            {fogHoles.map((c, i) => (
               <circle
                 key={i}
-                cx={coords.x}
-                cy={coords.y}
+                cx={c.x}
+                cy={c.y}
                 r="40"
                 fill="black"
                 className="transition-all duration-1000"

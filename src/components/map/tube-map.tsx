@@ -12,11 +12,19 @@ interface TubeMapProps {
 type LineRaw = {
   color: string;
   nodes: { coords: [number, number]; name: string }[];
+  name?: string; // Added name property
 };
 
 const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stationCoords, setStationCoords] = useState<Record<string, { x: number; y: number }>>(
+    {}
+  );
+  const [hoveredStation, setHoveredStation] = useState<{
+    name: string;
+    lines: { color: string; name: string }[];
+  } | null>(null);
+  const [stationDetails, setStationDetails] = useState<Record<string, { name: string; lines: { color: string; name: string }[] }>>(
     {}
   );
   const { resolvedTheme } = useTheme();
@@ -37,12 +45,23 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
 
     // cast lines
     const rawLines = (londonData.lines as unknown) as LineRaw[];
+    const stationLineDetails: Record<string, { name: string; lines: { color: string; name: string }[] }> = {};
 
     // 1️⃣ gather stationPositions from line nodes
     const stationPositions: Record<string, [number, number]> = {};
     rawLines.forEach((ln) => {
       ln.nodes.forEach((node) => {
         stationPositions[node.name] = node.coords;
+      });
+    });
+
+    // Gather line details for each station
+    rawLines.forEach(ln => {
+      ln.nodes.forEach(node => {
+        if (!stationLineDetails[node.name]) {
+          stationLineDetails[node.name] = { name: node.name, lines: [] };
+        }
+        stationLineDetails[node.name].lines.push({ color: ln.color, name: ln.name || 'Unknown Line' }); // Use ln.name directly and provide a fallback
       });
     });
 
@@ -105,6 +124,14 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
         coordsMap[id] = { x: xScale(pos[0]), y: yScale(pos[1]) };
       });
 
+    // Add event listeners to station circles
+    g.selectAll('circle.station')
+      .on('mouseover', (_, d) => {
+        setHoveredStation(stationLineDetails[(d as [string, [number, number]])[0]]); // Explicitly cast d
+      })
+      .on('mouseout', () => setHoveredStation(null));
+
+
     setStationCoords(coordsMap);
   }, [resolvedTheme]);
 
@@ -142,6 +169,19 @@ const TubeMapComponent: React.FC<TubeMapProps> = ({ visitedStations }) => {
           </filter>
         </defs>
       </svg>
+      {hoveredStation && (
+        <div className="absolute bottom-4 left-4 bg-card p-4 rounded-md shadow-lg pointer-events-auto z-20 text-sm">
+          <h3 className="font-semibold mb-1">{hoveredStation.name}</h3>
+          <ul>
+            {hoveredStation.lines.map((line, index) => (
+              <li key={index} className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: line.color }}></span>
+                {line.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

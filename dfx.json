@@ -1,0 +1,40 @@
+{
+  "canisters": {
+    "achievements": {
+      "type": "rust",
+      "candid": "src/backend/achievements/achievements.did",
+      "package": "achievements"
+    },
+    "solana_bridge": {
+      "type": "rust", 
+      "candid": "src/backend/solana_bridge/solana_bridge.did",
+      "package": "solana_bridge"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": "",
+      "args": ""
+    },
+    "canister_http": {
+      "enabled": false
+    },
+    "proguard": {
+      "enabled": false
+    },
+    "rust": {
+      "args": ""
+    },
+    "vendor": {
+      "enabled": false
+    }
+  },
+  "dfx": "0.27.0",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
+} 

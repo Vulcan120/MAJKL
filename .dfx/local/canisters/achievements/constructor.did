@@ -1,0 +1,48 @@
+type AchievementData = record {
+    user_id : text;
+    achievement_id : text;
+    achievement_name : text;
+    required_visits : nat32;
+    current_visits : nat32;
+    timestamp : text;
+    wallet_address : text;
+};
+
+type Attribute = record {
+    trait_type : text;
+    value : text;
+};
+
+type AchievementMetadata = record {
+    name : text;
+    symbol : text;
+    description : text;
+    image : text;
+    attributes : vec Attribute;
+};
+
+type MintingRequest = record {
+    achievement_data : AchievementData;
+    metadata : AchievementMetadata;
+};
+
+type MintingResponse = record {
+    success : bool;
+    token_mint : opt text;
+    transaction_signature : opt text;
+    error : opt text;
+};
+
+type StoredAchievement = record {
+    achievement_id : text;
+    user_id : text;
+    unlocked_at : text;
+    verified : bool;
+};
+
+service : {
+    "validate_achievement" : (AchievementData) -> (bool);
+    "request_solana_minting" : (MintingRequest) -> (MintingResponse);
+    "get_user_achievements" : (text) -> (vec StoredAchievement) query;
+    "get_achievement_history" : (text) -> (vec AchievementData) query;
+}; 

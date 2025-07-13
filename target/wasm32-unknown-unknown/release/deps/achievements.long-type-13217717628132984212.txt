@@ -1,0 +1,1 @@
+&mut StableBTreeMap<std::string::String, StoredAchievement, Ic0StableMemory>

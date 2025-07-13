@@ -1,0 +1,24 @@
+type SolanaTransaction = record {
+    instruction : vec nat8;
+    recent_blockhash : text;
+    fee_payer : text;
+};
+
+type SolanaResponse = record {
+    success : bool;
+    signature : opt text;
+    error : opt text;
+};
+
+type AchievementMintingRequest = record {
+    achievement_id : text;
+    user_wallet : text;
+    metadata_uri : text;
+};
+
+service : {
+    "mint_achievement_token" : (AchievementMintingRequest) -> (SolanaResponse);
+    "send_solana_transaction" : (SolanaTransaction) -> (SolanaResponse);
+    "get_solana_balance" : (text) -> (variant { Ok : nat64; Err : text }) query;
+    "get_solana_account_info" : (text) -> (variant { Ok : text; Err : text }) query;
+}; 

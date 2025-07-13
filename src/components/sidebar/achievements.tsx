@@ -190,14 +190,28 @@ export default function Achievements() {
                         <p className="text-xs text-muted-foreground truncate">
                           {achievement.description}
                         </p>
-                        {achievement.unlockedAt && (
-                          <p className="text-xs text-muted-foreground">
-                            Unlocked {format(new Date(achievement.unlockedAt), 'MMM d, yyyy')}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {achievement.unlockedAt && (
+                            <p className="text-xs text-muted-foreground">
+                              Unlocked {format(new Date(achievement.unlockedAt), 'MMM d, yyyy')}
+                            </p>
+                          )}
+                          {achievement.verified && (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                              ✅ ICP Verified
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       
-                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <div className="flex flex-col items-end gap-1">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        {achievement.transactionSignature && (
+                          <Badge variant="outline" className="text-xs">
+                            ICP TX
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

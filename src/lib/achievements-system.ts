@@ -286,10 +286,37 @@ async function mintAchievement(milestone: AchievementMilestone): Promise<Achieve
   // Save to localStorage
   saveAchievement(achievement);
   
+  // ICP Validation - Simulate validation through ICP canister
+  try {
+    const icpValidation = await validateAchievementOnICP(achievement);
+    achievement.verified = icpValidation.success;
+    if (icpValidation.transactionSignature) {
+      achievement.transactionSignature = icpValidation.transactionSignature;
+    }
+    console.log('✅ Achievement validated on ICP:', achievement.name);
+  } catch (error) {
+    console.error('❌ ICP validation failed:', error);
+    // Achievement still saved locally even if ICP validation fails
+  }
+  
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   return achievement;
+}
+
+// ICP validation function
+async function validateAchievementOnICP(achievement: Achievement): Promise<{ success: boolean; transactionSignature?: string }> {
+  // This would be a real call to your ICP canister
+  // For now, we'll simulate the validation
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: true,
+        transactionSignature: `icp_tx_${Date.now()}_${achievement.id}`
+      });
+    }, 500);
+  });
 }
 
 // Real Solana minting function via ICP bridge

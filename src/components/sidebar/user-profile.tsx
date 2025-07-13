@@ -27,6 +27,7 @@ import {
   Check     // Add this
 } from 'lucide-react';
 import { useTubeTheme } from '@/contexts/tube-theme-context';
+import StationTokens from './station-tokens';
 
 interface UserProfileProps {
   collectedBadges: string[];
@@ -449,52 +450,52 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
                  </CardContent>
                </Card>
 
-              {/* Bio Section */}
-               <Card>
-                 <CardHeader className="pb-3">
-                   <CardTitle className="text-lg flex items-center justify-between">
-                     <div className="flex items-center gap-2">
-                       <Edit3 className="w-5 h-5 text-primary" />
-                       My Journey
-                     </div>
-                     {!isEditingBio && (
-                       <Button 
-                         variant="ghost" 
-                         size="sm"
-                         onClick={() => setIsEditingBio(true)}
-                       >
-                         <Edit3 className="w-4 h-4" />
-                       </Button>
-                     )}
-                   </CardTitle>
-                 </CardHeader>
-                 <CardContent>
-                   {isEditingBio ? (
-                     <div className="space-y-3">
-                       <Textarea
-                         value={tempBio}
-                         onChange={(e) => setTempBio(e.target.value)}
-                         placeholder="Why do you want to visit every tube station?"
-                         className="min-h-[80px]"
-                       />
-                       <div className="flex gap-2">
-                         <Button size="sm" onClick={handleSaveBio}>
-                           <Save className="w-4 h-4 mr-2" />
-                           Save
-                         </Button>
-                         <Button size="sm" variant="outline" onClick={handleCancelBio}>
-                           <X className="w-4 h-4 mr-2" />
-                           Cancel
-                         </Button>
-                       </div>
-                     </div>
-                   ) : (
-                     <p className="text-sm text-muted-foreground leading-relaxed">
-                       {bio}
-                     </p>
-                   )}
-                 </CardContent>
-               </Card>
+            {/* Bio Section */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Edit3 className="w-5 h-5 text-primary" />
+                    My Journey
+                  </div>
+                  {!isEditingBio && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setIsEditingBio(true)}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isEditingBio ? (
+                  <div className="space-y-3">
+                    <Textarea
+                      value={tempBio}
+                      onChange={(e) => setTempBio(e.target.value)}
+                      placeholder="Why do you want to visit every tube station?"
+                      className="min-h-[80px]"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveBio}>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleCancelBio}>
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {bio}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
               {/* Add Theme Selection Section */}
                <Card>

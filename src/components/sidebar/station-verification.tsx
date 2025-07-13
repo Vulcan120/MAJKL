@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { orderByDistance } from 'geolib';
 import stationCoordinates from '@/lib/station-coordinates.json';
 import { saveStationPhoto } from '@/lib/utils';
+import { mintStationToken, type StationToken } from '@/lib/token-system';
+import TokenMintCelebration from './token-mint-celebration';
 
 const VerificationSchema = z.object({
   stationName: z.string().min(1, 'Please select a station'),
@@ -141,6 +143,10 @@ export default function StationVerification({ onStationVerified, allStations }: 
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [nearbyStations, setNearbyStations] = useState<StationWithDistance[]>([]);
+  
+  // Token celebration
+  const [showTokenCelebration, setShowTokenCelebration] = useState(false);
+  const [mintedToken, setMintedToken] = useState<StationToken | null>(null);
 
   const form = useForm<z.infer<typeof VerificationSchema>>({
     resolver: zodResolver(VerificationSchema),
@@ -379,14 +385,33 @@ export default function StationVerification({ onStationVerified, allStations }: 
           saveStationPhoto(data.stationName, photoDataUri, 'verification');
         }
         
-        toast({ 
-          title: `🎉 Verified!`, 
-          description: `${data.stationName} station confirmed!`, 
-          className: 'bg-green-500 text-white' 
-        });
+        // Mint station token
+        let mintedTokenData: StationToken | null = null;
+        try {
+          setVerificationStatus('🪙 Minting station token...');
+          mintedTokenData = await mintStationToken(data.stationName);
+          setVerificationStatus('✅ Token minted successfully!');
+          await new Promise(resolve => setTimeout(resolve, 800));
+        } catch (error) {
+          console.error('Token minting failed:', error);
+          // Don't fail the entire verification for token minting issues
+        }
+        
         onStationVerified(data.stationName);
         form.reset();
         setPhotoDataUri(null);
+        
+        // Show celebration modal if token was minted
+        if (mintedTokenData) {
+          setMintedToken(mintedTokenData);
+          setShowTokenCelebration(true);
+        } else {
+          toast({ 
+            title: `🎉 Verified!`, 
+            description: `${data.stationName} station confirmed!`, 
+            className: 'bg-green-500 text-white' 
+          });
+        }
       } else {
         setVerificationStatus('❌ Verification failed');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Show failure state
@@ -457,14 +482,33 @@ export default function StationVerification({ onStationVerified, allStations }: 
         saveStationPhoto(data.stationName, photoDataUri, 'verification');
       }
       
-      toast({ 
-        title: `🎉 Verified! (DEV MODE)`, 
-        description: `${data.stationName} station confirmed!`, 
-        className: 'bg-green-500 text-white' 
-      });
+      // Mint station token
+      let mintedTokenData: StationToken | null = null;
+      try {
+        setVerificationStatus('🪙 Minting station token...');
+        mintedTokenData = await mintStationToken(data.stationName);
+        setVerificationStatus('✅ Token minted successfully!');
+        await new Promise(resolve => setTimeout(resolve, 800));
+      } catch (error) {
+        console.error('Token minting failed:', error);
+        // Don't fail the entire verification for token minting issues
+      }
+      
       onStationVerified(data.stationName);
       form.reset();
       setPhotoDataUri(null);
+      
+      // Show celebration modal if token was minted
+      if (mintedTokenData) {
+        setMintedToken(mintedTokenData);
+        setShowTokenCelebration(true);
+      } else {
+        toast({ 
+          title: `🎉 Verified! (DEV MODE)`, 
+          description: `${data.stationName} station confirmed!`, 
+          className: 'bg-green-500 text-white' 
+        });
+      }
     } catch (error) {
       setVerificationProgress(0);
       setVerificationStatus('💥 Verification error occurred');
@@ -739,6 +783,21 @@ export default function StationVerification({ onStationVerified, allStations }: 
 
       {/* Hidden canvas for photo capture */}
       <canvas ref={canvasRef} className="hidden" />
+      
+      {/* Token Mint Celebration Modal */}
+      <TokenMintCelebration
+        isOpen={showTokenCelebration}
+        onClose={() => {
+          setShowTokenCelebration(false);
+          setMintedToken(null);
+          toast({ 
+            title: `🎉 Token Added!`, 
+            description: `${mintedToken?.stationName} token added to your collection!`, 
+            className: 'bg-green-500 text-white' 
+          });
+        }}
+        token={mintedToken}
+      />
     </Card>
   );
 }

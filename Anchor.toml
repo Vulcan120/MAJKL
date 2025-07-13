@@ -1,0 +1,15 @@
+[workspace]
+members = ["programs/phantomfog"]
+
+[programs.devnet]
+# Replace with your deployed program ID
+phantomfog = "YourProgramIDHere..."
+
+[provider]
+# Cluster RPC for devnet
+cluster = "https://api.devnet.solana.com"
+# Local path to your Solana CLI wallet (Phantom-exported keypair)
+wallet = "~/.config/solana/id.json"
+
+# Optional registry for program addresses
+tidy = true

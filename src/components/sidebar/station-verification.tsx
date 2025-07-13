@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { Camera, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Camera, CheckCircle, XCircle, Loader2, MapPin, Navigation } from 'lucide-react';
 import { verifyStationImageAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { orderByDistance } from 'geolib';
+import stationCoordinates from '@/lib/station-coordinates.json';
+import { saveStationPhoto } from '@/lib/utils';
 
 const VerificationSchema = z.object({
   stationName: z.string().min(1, 'Please select a station'),
@@ -22,6 +25,16 @@ const VerificationSchema = z.object({
 interface StationVerificationProps {
   onStationVerified: (stationName: string) => void;
   allStations: string[];
+}
+
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
+interface StationWithDistance {
+  name: string;
+  distance: number;
 }
 
 const VerificationCircle = ({ 
@@ -80,38 +93,6 @@ const VerificationCircle = ({
               opacity: isFailed ? 0.5 : 1,
             }}
           />
-          
-          {/* Success checkmark */}
-          {isSuccess && (
-            <g className="animate-in fade-in duration-300">
-              <CheckCircle 
-                size={24} 
-                className="text-green-500" 
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-            </g>
-          )}
-          
-          {/* Failure X */}
-          {isFailed && (
-            <g className="animate-in fade-in duration-300">
-              <XCircle 
-                size={24} 
-                className="text-red-500" 
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-            </g>
-          )}
         </svg>
         
         {/* Center icon/content */}
@@ -154,11 +135,131 @@ export default function StationVerification({ onStationVerified, allStations }: 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  
+  // Location-based functionality
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [nearbyStations, setNearbyStations] = useState<StationWithDistance[]>([]);
 
   const form = useForm<z.infer<typeof VerificationSchema>>({
     resolver: zodResolver(VerificationSchema),
     defaultValues: { stationName: '', username: '' },
   });
+
+  // Get user's location
+  const getUserLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser.");
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationError(null);
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 600000 // 10 minutes
+    };
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+
+      const location = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      };
+
+      setUserLocation(location);
+      calculateNearbyStations(location);
+      toast({ 
+        title: "Location found", 
+        description: "Showing nearby stations first", 
+        className: 'bg-green-500 text-white' 
+      });
+    } catch (error) {
+      const err = error as GeolocationPositionError;
+      let message = "Could not get your location.";
+      
+      switch (err.code) {
+        case err.PERMISSION_DENIED:
+          message = "Location access denied. Please enable location permissions.";
+          break;
+        case err.POSITION_UNAVAILABLE:
+          message = "Location information unavailable.";
+          break;
+        case err.TIMEOUT:
+          message = "Location request timed out.";
+          break;
+      }
+      
+      setLocationError(message);
+      toast({ 
+        title: "Location Error", 
+        description: message, 
+        variant: 'destructive' 
+      });
+    } finally {
+      setLocationLoading(false);
+    }
+  }, [toast]);
+
+  // Calculate nearby stations
+  const calculateNearbyStations = useCallback((location: UserLocation) => {
+    const stationsWithCoords = allStations
+      .map(station => {
+        const coords = stationCoordinates[station as keyof typeof stationCoordinates];
+        if (!coords) return null;
+        
+        return {
+          name: station,
+          latitude: coords.latitude,
+          longitude: coords.longitude
+        };
+      })
+      .filter((station): station is NonNullable<typeof station> => station !== null);
+
+    if (stationsWithCoords.length === 0) return;
+
+    // Use geolib to calculate distances and sort by proximity
+    const sortedStations = orderByDistance(
+      { latitude: location.latitude, longitude: location.longitude },
+      stationsWithCoords
+    );
+
+    const nearbyStationsWithDistance = sortedStations.slice(0, 10).map((station) => ({
+      name: (station as any).name,
+      distance: Math.round((station as any).distance || 0) // geolib adds distance property
+    }));
+
+    setNearbyStations(nearbyStationsWithDistance);
+  }, [allStations]);
+
+  // Get organized station list (nearby first, then alphabetical)
+  const getOrganizedStations = useCallback(() => {
+    if (nearbyStations.length === 0) {
+      return allStations.sort();
+    }
+
+    const nearbyStationNames = nearbyStations.map(s => s.name);
+    const otherStations = allStations
+      .filter(station => !nearbyStationNames.includes(station))
+      .sort();
+
+    return [...nearbyStations.map(s => s.name), ...otherStations];
+  }, [allStations, nearbyStations]);
+
+  // Format distance for display
+  const formatDistance = (distance: number) => {
+    if (distance < 1000) {
+      return `${distance}m`;
+    } else {
+      return `${(distance / 1000).toFixed(1)}km`;
+    }
+  };
   
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -260,6 +361,7 @@ export default function StationVerification({ onStationVerified, allStations }: 
         photoDataUri,
         stationName: data.stationName,
         username: data.username,
+        userLocation: userLocation || undefined,
       });
       
       setVerificationProgress(85);
@@ -271,6 +373,11 @@ export default function StationVerification({ onStationVerified, allStations }: 
       if (result.isAuthentic) {
         setVerificationStatus('✅ Station verified successfully!');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Show success state
+        
+        // Save verification photo to localStorage
+        if (photoDataUri) {
+          saveStationPhoto(data.stationName, photoDataUri, 'verification');
+        }
         
         toast({ 
           title: `🎉 Verified!`, 
@@ -310,6 +417,74 @@ export default function StationVerification({ onStationVerified, allStations }: 
     }
   };
 
+  // Dev-only function that bypasses verification and always succeeds
+  const onDevSubmit = async (data: z.infer<typeof VerificationSchema>) => {
+    if (!photoDataUri) {
+      toast({ title: "No Photo", description: "Please take a photo to submit.", variant: 'destructive' });
+      return;
+    }
+    
+    setIsLoading(true);
+    setVerificationProgress(0);
+    setVerificationStatus('Initializing verification...');
+    
+    try {
+      // Progress animation sequence (same as real flow)
+      setVerificationProgress(15);
+      setVerificationStatus('Sending image to AI...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setVerificationProgress(35);
+      setVerificationStatus('Analyzing image authenticity...');
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      setVerificationProgress(60);
+      setVerificationStatus('Checking station signs...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setVerificationProgress(85);
+      setVerificationStatus('Verifying username...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setVerificationProgress(100);
+      
+      // Always succeed in dev mode
+      setVerificationStatus('✅ Station verified successfully!');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Show success state
+      
+      // Save verification photo to localStorage
+      if (photoDataUri) {
+        saveStationPhoto(data.stationName, photoDataUri, 'verification');
+      }
+      
+      toast({ 
+        title: `🎉 Verified! (DEV MODE)`, 
+        description: `${data.stationName} station confirmed!`, 
+        className: 'bg-green-500 text-white' 
+      });
+      onStationVerified(data.stationName);
+      form.reset();
+      setPhotoDataUri(null);
+    } catch (error) {
+      setVerificationProgress(0);
+      setVerificationStatus('💥 Verification error occurred');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({ 
+        title: "Error", 
+        description: "An unexpected error occurred during verification.", 
+        variant: 'destructive' 
+      });
+    } finally {
+      // Reset after a delay
+      setTimeout(() => {
+        setIsLoading(false);
+        setVerificationProgress(0);
+        setVerificationStatus('');
+      }, 1500);
+    }
+  };
+
   useEffect(() => {
     return () => stopCamera();
   }, [stopCamera]);
@@ -327,27 +502,94 @@ export default function StationVerification({ onStationVerified, allStations }: 
       );
   }
 
+  const organizedStations = getOrganizedStations();
+
   return (
-    <Card className="border-none shadow-none">
+    <Card className="border-none shadow-none mt-4">
       <CardHeader className="p-0">
         <CardTitle className="text-md">Verify Station Visit</CardTitle>
-        <CardDescription>Take a selfie at a station to get your badge.</CardDescription>
+        <CardDescription className="text-sm">
+          Take a selfie at a station to verify your visit
+        </CardDescription>
       </CardHeader>
-      <CardContent className="p-0 mt-4">
+      <CardContent className="p-0 mt-2">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Location section */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {userLocation ? (
+                    <span className="text-green-600">Location found</span>
+                  ) : (
+                    "Show nearby stations"
+                  )}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={getUserLocation}
+                disabled={locationLoading}
+                className="text-xs"
+              >
+                {locationLoading ? (
+                  <>
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    Getting location...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="mr-1 h-3 w-3" />
+                    Use Location
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {locationError && (
+              <p className="text-xs text-red-600">{locationError}</p>
+            )}
+
             <FormField
-              control={form.control} name="stationName"
+              control={form.control}
+              name="stationName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Station</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel className="text-sm">Station</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger><SelectValue placeholder="Select a station" /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a station" />
+                      </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {allStations.sort().map(station => (
-                        <SelectItem key={station} value={station}>{station}</SelectItem>
+                      {nearbyStations.length > 0 && (
+                        <>
+                          <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b">
+                            Nearby Stations
+                          </div>
+                          {nearbyStations.map((station) => (
+                            <SelectItem key={station.name} value={station.name}>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{station.name}</span>
+                                <span className="text-xs text-green-600 ml-2">
+                                  {formatDistance(station.distance)}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                          <div className="px-2 py-1 text-xs font-medium text-muted-foreground border-b">
+                            All Stations
+                          </div>
+                        </>
+                      )}
+                      {organizedStations.slice(nearbyStations.length).map((station) => (
+                        <SelectItem key={station} value={station}>
+                          {station}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -355,13 +597,15 @@ export default function StationVerification({ onStationVerified, allStations }: 
                 </FormItem>
               )}
             />
+
             <FormField
-              control={form.control} name="username"
+              control={form.control}
+              name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>@Username (must be in photo)</FormLabel>
+                  <FormLabel className="text-sm">Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="@your_handle" {...field} />
+                    <Input {...field} placeholder="@yourname" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -404,78 +648,97 @@ export default function StationVerification({ onStationVerified, allStations }: 
                 </>
               )}
             </Button>
+
+            {/* Dev-only button for testing */}
+            {process.env.NODE_ENV === 'development' && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full border-orange-500 text-orange-500 hover:bg-orange-50" 
+                disabled={!photoDataUri || isLoading}
+                onClick={() => {
+                  const formData = form.getValues();
+                  if (formData.stationName && formData.username) {
+                    onDevSubmit(formData);
+                  } else {
+                    toast({ title: "Missing Info", description: "Please select a station and enter username.", variant: 'destructive' });
+                  }
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    DEV: Always Succeed
+                  </>
+                )}
+              </Button>
+            )}
           </form>
         </Form>
       </CardContent>
-      <Dialog open={isCameraOpen} onOpenChange={(open) => {
-        if (!open) {
-          stopCamera();
-        }
-        setIsCameraOpen(open);
-      }}>
-        <DialogContent className="p-0 w-[95vw] max-w-md sm:max-w-lg max-h-[90vh] mx-auto">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle>Take Your Selfie</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Hold your @username sign clearly and make sure the station is visible
-            </p>
+
+      {/* Camera Dialog */}
+      <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Take a Selfie</DialogTitle>
           </DialogHeader>
-          
-          <div className="relative p-4">
-            <div className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-[4/3]">
-              {!isCameraReady && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Starting camera...</p>
-                  </div>
-                </div>
-              )}
-              
+          <div className="space-y-4">
+            <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
               <video 
                 ref={videoRef} 
                 autoPlay 
-                playsInline 
-                muted
-                className={`w-full h-full object-cover scale-x-[-1] ${isCameraReady ? 'opacity-100' : 'opacity-0'}`}
+                muted 
+                playsInline
+                className="w-full h-full object-cover transform scale-x-[-1]"
+                style={{ 
+                  opacity: isCameraReady ? 1 : 0,
+                  transition: 'opacity 0.3s ease-in-out'
+                }}
               />
               
-              {/* Overlay guide - only show when camera is ready */}
-              {isCameraReady && (
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute inset-4 border-2 border-white/50 rounded-lg"></div>
-                  <div className="absolute top-4 left-4 right-4 text-white text-xs bg-black/70 rounded p-2">
-                    📄 Hold your @username sign clearly<br/>
-                    🚇 Make sure station signs are visible<br/>
-                    😊 Keep your face in frame
-                  </div>
+              {/* Camera viewfinder overlay */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-4 border-2 border-white/30 rounded-lg" />
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white/50 rounded-full" />
+              </div>
+              
+              {/* Loading indicator */}
+              {!isCameraReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
                 </div>
               )}
             </div>
-            <canvas ref={canvasRef} className="hidden" />
+            
+            {/* Instructions */}
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Make sure you're clearly visible with station signs in the background
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Hold your handwritten @username clearly visible
+              </p>
+            </div>
           </div>
           
-          <DialogFooter className="p-4 border-t gap-2">
-            <Button 
-              onClick={() => {
-                setIsCameraOpen(false);
-                stopCamera();
-              }} 
-              variant="outline" 
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={takePhoto} 
-              className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
-              disabled={!isCameraReady}
-            >
-              📸 Take Photo
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
+            <Button onClick={takePhoto} disabled={!isCameraReady}>
+              <Camera className="mr-2 h-4 w-4" />
+              Take Photo
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden canvas for photo capture */}
+      <canvas ref={canvasRef} className="hidden" />
     </Card>
   );
 }

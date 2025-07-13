@@ -1,12 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Rocket } from 'lucide-react';
+import { Rocket, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsMounted(true);
@@ -15,11 +18,48 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 md:px-6">
-        <Link href="/" className="flex items-center space-x-2">
-          <Rocket className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline text-lg text-primary">TubeHacks</span>
-        </Link>
+        <div className="flex items-center space-x-6">
+          <Link href="/" className="flex items-center space-x-2">
+            <Rocket className="h-6 w-6 text-primary" />
+            <span className="font-bold font-headline text-lg text-primary">TubeHacks</span>
+          </Link>
+          
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center space-x-2">
+            <Link href="/">
+              <Button 
+                variant={pathname === '/' ? 'default' : 'ghost'} 
+                size="sm"
+                className={cn(
+                  "flex items-center gap-2",
+                  pathname === '/' && "bg-primary text-primary-foreground"
+                )}
+              >
+                <Map className="h-4 w-4" />
+                Map
+              </Button>
+            </Link>
+
+          </nav>
+        </div>
+        
         <div className="flex items-center space-x-4">
+          {/* Mobile navigation */}
+          <nav className="md:hidden flex items-center space-x-1">
+            <Link href="/">
+              <Button 
+                variant={pathname === '/' ? 'default' : 'ghost'} 
+                size="sm"
+                className={cn(
+                  pathname === '/' && "bg-primary text-primary-foreground"
+                )}
+              >
+                <Map className="h-4 w-4" />
+              </Button>
+            </Link>
+
+          </nav>
+          
           {isMounted ? (
             <WalletMultiButton style={{}} />
           ) : (

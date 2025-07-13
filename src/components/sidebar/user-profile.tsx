@@ -79,6 +79,23 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
     { stationName: 'Pimlico', timestamp: new Date('2024-01-15T11:45:00'), verified: true },
   ];
 
+  // Mock streak data (we'll implement this later)
+  const calculateStreaks = () => {
+    // Mock calculation - replace with real logic later
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // For demo: assume current streak based on recent visits
+    const currentStreak = visitLog.length > 0 ? 3 : 0; // Mock: 3 day streak
+    const longestStreak = 12; // Mock: best streak was 12 days
+    const streakGoal = 7; // Weekly challenge
+    
+    return { currentStreak, longestStreak, streakGoal };
+  };
+
+  const { currentStreak, longestStreak, streakGoal } = calculateStreaks();
+
   // Camera functions
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -294,15 +311,14 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
               </div>
             </div>
 
-            {/* Exploration Progress */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  Exploration Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+
+
+            {/* Tube Roundel Streak Display */}
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="font-semibold mb-3 flex items-center gap-2 text-md">
+                  <MapPin className="w-5 h-5 text-primary" /> Exploration Progress
+                </h3>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">
                     {visitedStations} of {totalStations} stations visited
@@ -311,23 +327,82 @@ export default function UserProfile({ collectedBadges }: UserProfileProps) {
                     {explorationPercentage}%
                   </Badge>
                 </div>
-                <Progress value={explorationPercentage} className="h-2" />
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-primary">{visitedStations}</p>
-                    <p className="text-xs text-muted-foreground">Visited</p>
+                <Progress value={explorationPercentage} className="h-2 mt-2" />
+              </div>
+              
+              {/* Tube Roundel Streak Ring */}
+              <div className="ml-6 flex flex-col items-center">
+                <div className="relative w-20 h-20">
+                  {/* Outer streak ring */}
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+                    {/* Background ring */}
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="35"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      fill="none"
+                      className="text-gray-200 dark:text-gray-700"
+                    />
+                    {/* Streak progress ring */}
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="35"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      fill="none"
+                      strokeDasharray={`${2 * Math.PI * 35}`}
+                      strokeDashoffset={`${2 * Math.PI * 35 * (1 - (currentStreak / streakGoal))}`}
+                      className={`transition-all duration-1000 ease-out ${
+                        currentStreak >= streakGoal ? 'text-green-500' : 'text-orange-500'
+                      }`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  
+                  {/* London Underground Roundel */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center relative">
+                      {/* Blue bar */}
+                      <div className="absolute w-16 h-3 bg-blue-800 rounded-sm"></div>
+                      {/* Streak number */}
+                      <div className="relative z-10 text-white font-bold text-lg">
+                        {currentStreak}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-orange-500">{totalStations - visitedStations}</p>
-                    <p className="text-xs text-muted-foreground">Remaining</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-green-500">{Math.round(explorationPercentage)}%</p>
-                    <p className="text-xs text-muted-foreground">Complete</p>
-                  </div>
+                  
+                  {/* Streak particles effect */}
+                  {currentStreak > 0 && (
+                    <div className="absolute inset-0 pointer-events-none">
+                      {[...Array(3)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="absolute w-1 h-1 bg-orange-400 rounded-full animate-ping"
+                          style={{
+                            top: `${20 + Math.random() * 40}%`,
+                            left: `${20 + Math.random() * 40}%`,
+                            animationDelay: `${i * 0.5}s`,
+                            animationDuration: '2s'
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+                
+                <div className="text-center mt-2">
+                  <p className="text-xs font-medium">
+                    {currentStreak > 0 ? `${currentStreak} Day Streak` : 'Start Streak'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {currentStreak >= streakGoal ? '🎉 Goal!' : `${streakGoal - currentStreak} to goal`}
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Visit Log */}
             <Card>

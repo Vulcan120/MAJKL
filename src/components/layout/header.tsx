@@ -1,13 +1,13 @@
-'use client';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { Rocket, Map } from 'lucide-react';
-import { Menu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Rocket, Map } from "lucide-react";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Header() {
   const [isMounted, setIsMounted] = useState(false);
@@ -23,54 +23,55 @@ export default function Header() {
         <div className="flex items-center space-x-6">
           <Link href="/" className="flex items-center space-x-2">
             <Rocket className="h-6 w-6 text-primary" />
-            <span className="font-bold font-headline text-lg text-primary">TubeHacks</span>
+            <span className="font-bold font-headline text-lg text-primary">
+              Tubler
+            </span>
           </Link>
-          
+
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-2">
             <Link href="/">
-              <Button 
-                variant={pathname === '/' ? 'default' : 'ghost'} 
+              <Button
+                variant={pathname === "/" ? "default" : "ghost"}
                 size="sm"
                 className={cn(
                   "flex items-center gap-2",
-                  pathname === '/' && "bg-primary text-primary-foreground"
+                  pathname === "/" && "bg-primary text-primary-foreground"
                 )}
               >
                 <Map className="h-4 w-4" />
                 Map
               </Button>
             </Link>
-
           </nav>
         </div>
-        
- <div className="flex items-center space-x-2 md:space-x-4">
+
+        <div className="flex items-center space-x-2 md:space-x-4">
           {/* Mobile navigation */}
- <Sheet>
- <SheetTrigger asChild className="md:hidden">
- <Button variant="ghost" size="icon">
- <Menu className="h-6 w-6" />
- <span className="sr-only">Open menu</span>
- </Button>
- </SheetTrigger>
- <SheetContent side="right">
- <nav className="flex flex-col space-y-4">
- <Link href="/">
- <Button
- variant={pathname === '/' ? 'default' : 'ghost'}
- className={cn(
- "w-full justify-start",
- pathname === '/' && "bg-primary text-primary-foreground"
- )}
- >
- <Map className="mr-2 h-4 w-4" /> Map
- </Button>
- </Link>
- </nav>
- </SheetContent>
- </Sheet>
-          
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <nav className="flex flex-col space-y-4">
+                <Link href="/">
+                  <Button
+                    variant={pathname === "/" ? "default" : "ghost"}
+                    className={cn(
+                      "w-full justify-start",
+                      pathname === "/" && "bg-primary text-primary-foreground"
+                    )}
+                  >
+                    <Map className="mr-2 h-4 w-4" /> Map
+                  </Button>
+                </Link>
+              </nav>
+            </SheetContent>
+          </Sheet>
+
           {isMounted ? (
             <WalletMultiButton style={{}} />
           ) : (

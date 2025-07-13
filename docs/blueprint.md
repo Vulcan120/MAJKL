@@ -1,4 +1,4 @@
-# **App Name**: TubeHacks
+# **App Name**: Tubler
 
 ## Core Features:
 

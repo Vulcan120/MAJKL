@@ -2,7 +2,7 @@
 // import { Connection, PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 // import { useWallet } from '@solana/wallet-adapter-react';
 
-import type { ICPAchievementData, ICPMintingRequest } from './icp-bridge';
+import type { ICPAchievementData, ICPMintingRequest } from "./icp-bridge";
 
 // Achievement milestone interface
 interface AchievementMilestone {
@@ -48,96 +48,128 @@ export interface AchievementMetadata {
 
 // Achievement milestones for 270 total stations
 const ACHIEVEMENT_MILESTONES: AchievementMilestone[] = [
-  { visits: 1, name: "First Steps", description: "Visit your first tube station" },
+  {
+    visits: 1,
+    name: "First Steps",
+    description: "Visit your first tube station",
+  },
   { visits: 10, name: "Getting Around", description: "Visit 10 tube stations" },
   { visits: 25, name: "Tube Explorer", description: "Visit 25 tube stations" },
-  { visits: 50, name: "London Navigator", description: "Visit 50 tube stations" },
-  { visits: 75, name: "Underground Veteran", description: "Visit 75 tube stations" },
+  {
+    visits: 50,
+    name: "London Navigator",
+    description: "Visit 50 tube stations",
+  },
+  {
+    visits: 75,
+    name: "Underground Veteran",
+    description: "Visit 75 tube stations",
+  },
   { visits: 100, name: "Metro Master", description: "Visit 100 tube stations" },
-  { visits: 150, name: "Tube Network Expert", description: "Visit 150 tube stations" },
-  { visits: 200, name: "London Underground Legend", description: "Visit 200 tube stations" },
+  {
+    visits: 150,
+    name: "Tube Network Expert",
+    description: "Visit 150 tube stations",
+  },
+  {
+    visits: 200,
+    name: "London Underground Legend",
+    description: "Visit 200 tube stations",
+  },
   { visits: 250, name: "Almost There", description: "Visit 250 tube stations" },
-  { visits: 270, name: "Tube Completionist", description: "Visit all 270 tube stations" }
+  {
+    visits: 270,
+    name: "Tube Completionist",
+    description: "Visit all 270 tube stations",
+  },
 ];
 
 // Generate achievement metadata
-function generateAchievementMetadata(achievement: AchievementMilestone): AchievementMetadata {
-  const tokenImage = generateAchievementImage(achievement.name, achievement.visits);
-  
+function generateAchievementMetadata(
+  achievement: AchievementMilestone
+): AchievementMetadata {
+  const tokenImage = generateAchievementImage(
+    achievement.name,
+    achievement.visits
+  );
+
   return {
     name: `${achievement.name} Achievement`,
-    symbol: 'TUBE_ACH',
+    symbol: "TUBE_ACH",
     description: `${achievement.description}. This achievement token represents your dedication to exploring the London Underground network.`,
     image: tokenImage,
     attributes: [
       {
-        trait_type: 'Achievement Type',
-        value: 'Station Visit Milestone'
+        trait_type: "Achievement Type",
+        value: "Station Visit Milestone",
       },
       {
-        trait_type: 'Required Visits',
-        value: achievement.visits.toString()
+        trait_type: "Required Visits",
+        value: achievement.visits.toString(),
       },
       {
-        trait_type: 'Network',
-        value: 'London Underground'
+        trait_type: "Network",
+        value: "London Underground",
       },
       {
-        trait_type: 'Verification Method',
-        value: 'AI + Blockchain'
+        trait_type: "Verification Method",
+        value: "AI + Blockchain",
       },
       {
-        trait_type: 'Rarity',
-        value: getRarityLevel(achievement.visits)
-      }
+        trait_type: "Rarity",
+        value: getRarityLevel(achievement.visits),
+      },
     ],
     properties: {
       files: [
         {
           uri: tokenImage,
-          type: 'image/svg+xml'
-        }
+          type: "image/svg+xml",
+        },
       ],
-      category: 'image',
+      category: "image",
       collection: {
-        name: 'TubeHacks Achievements',
-        family: 'TubeHacks'
-      }
-    }
+        name: "Tubler Achievements",
+        family: "Tubler",
+      },
+    },
   };
 }
 
 // Generate achievement rarity level
 function getRarityLevel(visits: number): string {
-  if (visits === 1) return 'Common';
-  if (visits <= 25) return 'Uncommon';
-  if (visits <= 100) return 'Rare';
-  if (visits <= 200) return 'Epic';
-  if (visits <= 250) return 'Legendary';
-  return 'Mythic'; // 270 visits
+  if (visits === 1) return "Common";
+  if (visits <= 25) return "Uncommon";
+  if (visits <= 100) return "Rare";
+  if (visits <= 200) return "Epic";
+  if (visits <= 250) return "Legendary";
+  return "Mythic"; // 270 visits
 }
 
 // Generate achievement SVG image
-function generateAchievementImage(achievementName: string, requiredVisits: number): string {
+function generateAchievementImage(
+  achievementName: string,
+  requiredVisits: number
+): string {
   const width = 300;
   const height = 300;
   const centerX = width / 2;
   const centerY = height / 2;
   const radius = 100;
-  
+
   // Color based on rarity
   const colors = {
-    Common: '#6B7280',
-    Uncommon: '#10B981',
-    Rare: '#3B82F6',
-    Epic: '#8B5CF6',
-    Legendary: '#F59E0B',
-    Mythic: '#EF4444'
+    Common: "#6B7280",
+    Uncommon: "#10B981",
+    Rare: "#3B82F6",
+    Epic: "#8B5CF6",
+    Legendary: "#F59E0B",
+    Mythic: "#EF4444",
   };
-  
+
   const rarity = getRarityLevel(requiredVisits);
-  const primaryColor = colors[rarity as keyof typeof colors] || '#6B7280';
-  
+  const primaryColor = colors[rarity as keyof typeof colors] || "#6B7280";
+
   const svg = `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -176,28 +208,38 @@ function generateAchievementImage(achievementName: string, requiredVisits: numbe
       </g>
       
       <!-- Achievement name -->
-      <text x="${centerX}" y="${centerY + 60}" text-anchor="middle" fill="${primaryColor}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">
+      <text x="${centerX}" y="${
+    centerY + 60
+  }" text-anchor="middle" fill="${primaryColor}" font-family="Arial, sans-serif" font-size="14" font-weight="bold">
         ${achievementName}
       </text>
       
       <!-- Visit count -->
-      <text x="${centerX}" y="${centerY + 80}" text-anchor="middle" fill="${primaryColor}" font-family="Arial, sans-serif" font-size="12">
+      <text x="${centerX}" y="${
+    centerY + 80
+  }" text-anchor="middle" fill="${primaryColor}" font-family="Arial, sans-serif" font-size="12">
         ${requiredVisits} Stations
       </text>
       
       <!-- Rarity badge -->
-      <rect x="${centerX - 40}" y="${centerY - 100}" width="80" height="20" fill="${primaryColor}" rx="10" />
-      <text x="${centerX}" y="${centerY - 87}" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10" font-weight="bold">
+      <rect x="${centerX - 40}" y="${
+    centerY - 100
+  }" width="80" height="20" fill="${primaryColor}" rx="10" />
+      <text x="${centerX}" y="${
+    centerY - 87
+  }" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10" font-weight="bold">
         ${rarity}
       </text>
       
-      <!-- TubeHacks branding -->
-      <text x="${centerX}" y="${centerY - 120}" text-anchor="middle" fill="${primaryColor}" font-family="Arial, sans-serif" font-size="10" font-weight="bold">
-        TUBEHACKS
+      <!-- Tubler branding -->
+      <text x="${centerX}" y="${
+    centerY - 120
+  }" text-anchor="middle" fill="${primaryColor}" font-family="Arial, sans-serif" font-size="10" font-weight="bold">
+        Tubler
       </text>
     </svg>
   `;
-  
+
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
@@ -206,18 +248,18 @@ function saveAchievement(achievement: Achievement): void {
   try {
     const existingAchievements = getAchievements();
     existingAchievements[achievement.id] = achievement;
-    localStorage.setItem('achievements', JSON.stringify(existingAchievements));
+    localStorage.setItem("achievements", JSON.stringify(existingAchievements));
   } catch (error) {
-    console.error('Error saving achievement:', error);
+    console.error("Error saving achievement:", error);
   }
 }
 
 function getAchievements(): { [id: string]: Achievement } {
   try {
-    const data = localStorage.getItem('achievements');
+    const data = localStorage.getItem("achievements");
     return data ? JSON.parse(data) : {};
   } catch (error) {
-    console.error('Error getting achievements:', error);
+    console.error("Error getting achievements:", error);
     return {};
   }
 }
@@ -235,7 +277,10 @@ function getAllUserAchievements(): Achievement[] {
 // Check if user has unlocked an achievement
 function hasAchievement(requiredVisits: number): boolean {
   const achievements = getAllUserAchievements();
-  return achievements.some(achievement => achievement.requiredVisits === requiredVisits && achievement.verified);
+  return achievements.some(
+    (achievement) =>
+      achievement.requiredVisits === requiredVisits && achievement.verified
+  );
 }
 
 // Get current visit count
@@ -243,7 +288,7 @@ function getCurrentVisitCount(): number {
   // Import token system functions
   // NOTE: This must be a require for SSR compatibility
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getAllUserTokens } = require('./token-system');
+  const { getAllUserTokens } = require("./token-system");
   const tokens = getAllUserTokens();
   return tokens.filter((token: any) => token.verified).length;
 }
@@ -252,25 +297,30 @@ function getCurrentVisitCount(): number {
 async function checkAndMintAchievements(): Promise<Achievement[]> {
   const currentVisits = getCurrentVisitCount();
   const unlockedAchievements: Achievement[] = [];
-  
+
   for (const milestone of ACHIEVEMENT_MILESTONES) {
-    if (currentVisits >= milestone.visits && !hasAchievement(milestone.visits)) {
+    if (
+      currentVisits >= milestone.visits &&
+      !hasAchievement(milestone.visits)
+    ) {
       const achievement = await mintAchievement(milestone);
       unlockedAchievements.push(achievement);
     }
   }
-  
+
   return unlockedAchievements;
 }
 
 // Mock minting function for demo (replace with actual Solana minting via ICP)
-async function mintAchievement(milestone: AchievementMilestone): Promise<Achievement> {
+async function mintAchievement(
+  milestone: AchievementMilestone
+): Promise<Achievement> {
   const metadata = generateAchievementMetadata(milestone);
-  
+
   // For demo purposes, simulate minting
   const mockMint = `achievement_${milestone.visits}_${Date.now()}`;
   const mockSignature = `mock_achievement_tx_${Date.now()}`;
-  
+
   const achievement: Achievement = {
     id: `achievement_${milestone.visits}`,
     name: milestone.name,
@@ -280,12 +330,12 @@ async function mintAchievement(milestone: AchievementMilestone): Promise<Achieve
     metadata,
     unlockedAt: new Date().toISOString(),
     transactionSignature: mockSignature,
-    verified: true
+    verified: true,
   };
-  
+
   // Save to localStorage
   saveAchievement(achievement);
-  
+
   // ICP Validation - Simulate validation through ICP canister
   try {
     const icpValidation = await validateAchievementOnICP(achievement);
@@ -293,27 +343,29 @@ async function mintAchievement(milestone: AchievementMilestone): Promise<Achieve
     if (icpValidation.transactionSignature) {
       achievement.transactionSignature = icpValidation.transactionSignature;
     }
-    console.log('✅ Achievement validated on ICP:', achievement.name);
+    console.log("✅ Achievement validated on ICP:", achievement.name);
   } catch (error) {
-    console.error('❌ ICP validation failed:', error);
+    console.error("❌ ICP validation failed:", error);
     // Achievement still saved locally even if ICP validation fails
   }
-  
+
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
   return achievement;
 }
 
 // ICP validation function
-async function validateAchievementOnICP(achievement: Achievement): Promise<{ success: boolean; transactionSignature?: string }> {
+async function validateAchievementOnICP(
+  achievement: Achievement
+): Promise<{ success: boolean; transactionSignature?: string }> {
   // This would be a real call to your ICP canister
   // For now, we'll simulate the validation
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
         success: true,
-        transactionSignature: `icp_tx_${Date.now()}_${achievement.id}`
+        transactionSignature: `icp_tx_${Date.now()}_${achievement.id}`,
       });
     }, 500);
   });
@@ -327,86 +379,93 @@ async function mintAchievementOnSolana(
 ): Promise<Achievement> {
   try {
     // Import ICP bridge functions
-    const { 
-      validateAchievementOnICP, 
-      mintAchievementOnSolanaViaICP
-    } = await import('./icp-bridge');
-    
+    const { validateAchievementOnICP, mintAchievementOnSolanaViaICP } =
+      await import("./icp-bridge");
+
     // Prepare achievement data for ICP
     const achievementData: ICPAchievementData = {
-      userId: wallet?.publicKey?.toString() || 'unknown',
+      userId: wallet?.publicKey?.toString() || "unknown",
       achievementId: achievement.id,
       achievementName: achievement.name,
       requiredVisits: achievement.requiredVisits,
       currentVisits: getCurrentVisitCount(),
       timestamp: new Date().toISOString(),
-      walletAddress: wallet?.publicKey?.toString() || 'unknown'
+      walletAddress: wallet?.publicKey?.toString() || "unknown",
     };
-    
+
     // Validate achievement on ICP
     const isValid = await validateAchievementOnICP(achievementData);
     if (!isValid) {
-      throw new Error('Achievement validation failed on ICP');
+      throw new Error("Achievement validation failed on ICP");
     }
-    
+
     // Prepare minting request
     const mintingRequest: ICPMintingRequest = {
       achievementData,
-      metadata: achievement.metadata
+      metadata: achievement.metadata,
     };
-    
+
     // Request Solana minting via ICP
     const mintingResponse = await mintAchievementOnSolanaViaICP(mintingRequest);
-    
+
     if (!mintingResponse.success) {
-      throw new Error(mintingResponse.error || 'Minting failed');
+      throw new Error(mintingResponse.error || "Minting failed");
     }
-    
+
     // Update achievement with real minting data
     const updatedAchievement: Achievement = {
       ...achievement,
       tokenMint: mintingResponse.tokenMint,
       transactionSignature: mintingResponse.transactionSignature,
-      verified: true
+      verified: true,
     };
-    
+
     // Save updated achievement
     saveAchievement(updatedAchievement);
-    
+
     return updatedAchievement;
   } catch (error) {
-    console.error('ICP bridge minting failed:', error);
+    console.error("ICP bridge minting failed:", error);
     // Fallback to mock minting for demo
     return await mintAchievement({
       visits: achievement.requiredVisits,
       name: achievement.name,
-      description: achievement.description
+      description: achievement.description,
     });
   }
 }
 
 // Get progress towards next achievement
-function getProgressToNextAchievement(): { current: number; next: number; progress: number } {
+function getProgressToNextAchievement(): {
+  current: number;
+  next: number;
+  progress: number;
+} {
   const currentVisits = getCurrentVisitCount();
-  
+
   for (const milestone of ACHIEVEMENT_MILESTONES) {
     if (currentVisits < milestone.visits) {
-      const previousMilestone = ACHIEVEMENT_MILESTONES.find(m => m.visits < milestone.visits)?.visits || 0;
-      const progress = ((currentVisits - previousMilestone) / (milestone.visits - previousMilestone)) * 100;
-      
+      const previousMilestone =
+        ACHIEVEMENT_MILESTONES.find((m) => m.visits < milestone.visits)
+          ?.visits || 0;
+      const progress =
+        ((currentVisits - previousMilestone) /
+          (milestone.visits - previousMilestone)) *
+        100;
+
       return {
         current: currentVisits,
         next: milestone.visits,
-        progress: Math.min(progress, 100)
+        progress: Math.min(progress, 100),
       };
     }
   }
-  
+
   // All achievements unlocked
   return {
     current: currentVisits,
     next: 270,
-    progress: 100
+    progress: 100,
   };
 }
 
@@ -415,5 +474,5 @@ export {
   getProgressToNextAchievement,
   checkAndMintAchievements,
   ACHIEVEMENT_MILESTONES,
-  mintAchievementOnSolana
-}; 
+  mintAchievementOnSolana,
+};

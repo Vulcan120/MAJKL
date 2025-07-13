@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Deploy ICP Canisters for TubeHacks Achievements System
+# Deploy ICP Canisters for Tubler Achievements System
 
-echo "🚀 Deploying ICP Canisters for TubeHacks..."
+echo "🚀 Deploying ICP Canisters for Tubler..."
 
 # Check if dfx is installed
 if ! command -v dfx &> /dev/null; then
